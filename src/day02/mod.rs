@@ -56,12 +56,28 @@ impl GameResult {
             Win => 6,
         }
     }
+
+    /// Find the move you have to play to get the desired result (from `self` point of view).
+    pub fn find_move(&self, opponent: Item) -> Item {
+        use GameResult::*;
+        use Item::*;
+        match (self, opponent) {
+            (Win, Rock) => Paper,
+            (Win, Paper) => Scissors,
+            (Win, Scissors) => Rock,
+            (Loss, Rock) => Scissors,
+            (Loss, Paper) => Rock,
+            (Loss, Scissors) => Paper,
+            (Draw, x) => x,
+        }
+    }
 }
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
 
-    let mut total_score: i32 = 0;
+    let mut part1: i32 = 0;
+    let mut part2: i32 = 0;
     while !input.is_empty() {
         let (rest, opponent_token) = parse::token(input).unwrap();
         let opponent = match opponent_token.as_bytes() {
@@ -82,19 +98,34 @@ pub fn solve(input: &[u8]) -> (String, String) {
             _ => panic!("unexpected token"),
         };
 
-        let result = me.play(opponent);
-        let score = me.score() + result.score();
-        debug!(
-            "parsed move: {:?} {:?}. game result: {:?}, score: {score}",
-            opponent, me, result
-        );
-        total_score += score;
+        {
+            let result = me.play(opponent);
+            let score = me.score() + result.score();
+            debug!(
+                "parsed move: {:?} {:?}. game result: {:?}, score: {score}",
+                opponent, me, result
+            );
+            part1 += score;
+        }
+
+        {
+            let result = match me_token.as_bytes() {
+                b"X" => GameResult::Loss,
+                b"Y" => GameResult::Draw,
+                b"Z" => GameResult::Win,
+                _ => panic!("unexpected token"),
+            };
+            let me = result.find_move(opponent);
+            debug!(
+                "you must play {:?} against {:?} to have result {:?}",
+                me, opponent, result
+            );
+            let score = me.score() + result.score();
+            part2 += score;
+        }
 
         input = parse::seek_next_line(rest);
     }
-
-    let part1 = total_score;
-    let part2: i64 = 42;
 
     (part1.to_string(), part2.to_string())
 }
@@ -105,40 +136,21 @@ mod tests {
 
     const DAY: i32 = 02;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
-    fn part1_example() {
-        let bufs = vec![(
-            b"A Y
+    fn example() {
+        let input = b"A Y
 B X
 C Z
-",
-            15,
-        )];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).0);
-        }
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
+";
+        let solution = solve(input);
+        assert_eq!("15", solution.0);
+        assert_eq!("12", solution.1);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("10816", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!("11657", answer.1);
     }
 }
