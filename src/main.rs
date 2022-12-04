@@ -25,7 +25,7 @@ fn main() {
     debug!("solving days: {:?}", days_to_solve);
     for day in days_to_solve {
         let now = Instant::now();
-        if let Ok(output) = aoc::solve(day) {
+        if let Some(solution) = aoc::solve(day) {
             let duration = now.elapsed().as_nanos() as u64;
             let duration_ms: f64 = duration as f64 / 1_000_000.;
             total_ms += duration_ms;
@@ -33,7 +33,7 @@ fn main() {
             writeln!(
                 handle,
                 "[Day {:02}]\tpart1: {:<16}\tpart2: {:<16}\tduration: {:>10.3} ms",
-                day, output.0, output.1, duration_ms
+                day, solution.0, solution.1, duration_ms
             )
             .unwrap();
         } else {
