@@ -46,8 +46,6 @@ pair would be exclusively cleaning sections their partner will already be cleani
 
 Your puzzle answer was `538`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 It seems like there is still quite a bit of duplicate work planned. Instead, the Elves would like to know the number of pairs that *overlap at all*.
@@ -63,13 +61,18 @@ So, in this example, the number of overlapping assignment pairs is `*4*`.
 
 *In how many assignment pairs do the ranges overlap?*
 
-Answer:
+Your puzzle answer was `792`.
 
-Although it hasn't changed, you can still [get your puzzle input][1].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][2] [Mastodon][3]] this puzzle.
+At this point, you should [return to your Advent calendar][1] and try another puzzle.
 
-[1]: 4/input
-[2]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Camp+Cleanup%22+%2D+Day+4+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F4&related=ericwastl&hashtags=AdventOfCode
-[3]: javascript:void(0);
+If you still want to see it, you can [get your puzzle input][2].
+
+You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+
+[1]: /2022
+[2]: 4/input
+[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Camp+Cleanup%22+%2D+Day+4+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F4&related=ericwastl&hashtags=AdventOfCode
+[4]: javascript:void(0);
 

@@ -1,31 +1,53 @@
-use log::debug;
-
 use aoc_lib::parse;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct Interval {
+    a: i32,
+    b: i32,
+}
+
+impl Interval {
+    pub fn new(a: i32, b: i32) -> Interval {
+        debug_assert!(a <= b);
+        Interval { a, b }
+    }
+
+    pub fn contains(&self, other: &Interval) -> bool {
+        self.a <= other.a && other.b <= self.b
+    }
+
+    pub fn overlaps(&self, other: &Interval) -> bool {
+        let (left, right) = if self <= other {
+            (self, other)
+        } else {
+            (other, self)
+        };
+        left.b >= right.a
+    }
+}
+
 pub fn solve(input: &[u8]) -> (String, String) {
-    let mut input = input;
     let mut part1: i32 = 0;
+    let mut part2: i32 = 0;
+    let mut input = input;
     while !input.is_empty() {
         let (rest, a1) = parse::positive(input, false).unwrap();
         let (rest, b1) = parse::positive(&rest[1..], false).unwrap();
+        let int1 = Interval::new(a1 as i32, b1 as i32);
+
         let (rest, a2) = parse::positive(&rest[1..], false).unwrap();
         let (rest, b2) = parse::positive(&rest[1..], false).unwrap();
-        debug!("{a1}-{b1},{a2}-{b2}");
-        debug_assert!(a1 <= b1);
-        debug_assert!(a2 <= b2);
+        let int2 = Interval::new(a2 as i32, b2 as i32);
 
-        // a1 <= a2 <= b2 <= b1
-        if a1 <= a2 && b2 <= b1 {
+        if int1.contains(&int2) || int2.contains(&int1) {
             part1 += 1;
-        } else if a2 <= a1 && b1 <= b2 {
-            part1 += 1;
+        }
+        if int1.overlaps(&int2) || int2.overlaps(&int1) {
+            part2 += 1;
         }
 
         input = parse::seek_next_line(rest);
     }
-
-    let part2: i64 = 42;
-
     (part1.to_string(), part2.to_string())
 }
 
@@ -40,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn part1_example() {
+    fn example() {
         init();
 
         let input = b"2-4,6-8
@@ -50,23 +72,15 @@ mod tests {
 6-6,4-6
 2-6,4-8
 ";
-        assert_eq!("2", solve(input).0);
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
+        let solution = solve(input);
+        assert_eq!("2", solution.0);
+        assert_eq!("4", solution.1);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("538", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("792", answer.1);
     }
 }
