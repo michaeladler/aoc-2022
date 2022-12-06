@@ -3,30 +3,33 @@
 
 The preparations are finally complete; you and the Elves leave camp on foot and begin to make your way toward the *star* fruit grove.
 
-As you move through the dense undergrowth, one of the Elves gives you a handheld *device*. He says that it has many fancy features, but the most important one to set up right now is the *communication system*.
+As you move through the dense undergrowth, one of the Elves gives you a handheld *device*. He says that it has many fancy features, but the most important one
+to set up right now is the *communication system*.
 
-However, because he's heard you have [significant][1] [experience][2] [dealing][3] [with][4] [signal-based][5] [systems][6], he convinced the other Elves that it would be okay to give you their one malfunctioning
-device - surely you'll have no problem fixing it.
+However, because he's heard you have [significant][1] [experience][2] [dealing][3] [with][4] [signal-based][5] [systems][6], he convinced the other Elves that
+it would be okay to give you their one malfunctioning device - surely you'll have no problem fixing it.
 
 As if inspired by comedic timing, the device emits a few colorful sparks.
 
-To be able to communicate with the Elves, the device needs to *lock on to their signal*. The signal is a series of seemingly-random characters that the device receives one at a time.
+To be able to communicate with the Elves, the device needs to *lock on to their signal*. The signal is a series of seemingly-random characters that the device
+receives one at a time.
 
-To fix the communication system, you need to add a subroutine to the device that detects a *start-of-packet marker* in the datastream. In the protocol being used by the Elves, the start of a packet is indicated by
-a sequence of *four characters that are all different*.
+To fix the communication system, you need to add a subroutine to the device that detects a *start-of-packet marker* in the datastream. In the protocol being
+used by the Elves, the start of a packet is indicated by a sequence of *four characters that are all different*.
 
-The device will send your subroutine a datastream buffer (your puzzle input); your subroutine needs to identify the first position where the four most recently received characters were all different. Specifically,
-it needs to report the number of characters from the beginning of the buffer to the end of the first such four-character marker.
+The device will send your subroutine a datastream buffer (your puzzle input); your subroutine needs to identify the first position where the four most recently
+received characters were all different. Specifically, it needs to report the number of characters from the beginning of the buffer to the end of the first such
+four-character marker.
 
 For example, suppose you receive the following datastream buffer:
 
 `mjqjpqmgbljsphdztnvjfqwrcgsmlb`
 
-After the first three characters (`mjq`) have been received, there haven't been enough characters received yet to find the marker. The first time a marker could occur is after the fourth character is received,
-making the most recent four characters `mjqj`. Because `j` is repeated, this isn't a marker.
+After the first three characters (`mjq`) have been received, there haven't been enough characters received yet to find the marker. The first time a marker could
+occur is after the fourth character is received, making the most recent four characters `mjqj`. Because `j` is repeated, this isn't a marker.
 
-The first time a marker appears is after the *seventh* character arrives. Once it does, the last four characters received are `jpqm`, which are all different. In this case, your subroutine should report the value
-`*7*`, because the first start-of-packet marker is complete after 7 characters have been processed.
+The first time a marker appears is after the *seventh* character arrives. Once it does, the last four characters received are `jpqm`, which are all different.
+In this case, your subroutine should report the value `*7*`, because the first start-of-packet marker is complete after 7 characters have been processed.
 
 Here are a few more examples:
 
@@ -38,8 +41,6 @@ Here are a few more examples:
 *How many characters need to be processed before the first start-of-packet marker is detected?*
 
 Your puzzle answer was `1080`.
-
-The first half of this puzzle is complete! It provides one gold star: *
 
 ## --- Part Two ---
 
@@ -57,11 +58,15 @@ Here are the first positions of start-of-message markers for all of the above ex
 
 *How many characters need to be processed before the first start-of-message marker is detected?*
 
-Answer:
+Your puzzle answer was `3645`.
 
-Although it hasn't changed, you can still [get your puzzle input][7].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][8] [Mastodon][9]] this puzzle.
+At this point, you should [return to your Advent calendar][7] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][8].
+
+You can also [Shareon [Twitter][9] [Mastodon][10]] this puzzle.
 
 [1]: /2016/day/6
 [2]: /2016/day/25
@@ -69,8 +74,9 @@ You can also [Shareon [Twitter][8] [Mastodon][9]] this puzzle.
 [4]: /2019/day/9
 [5]: /2019/day/16
 [6]: /2021/day/25
-[7]: 6/input
-[8]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Tuning+Trouble%22+%2D+Day+6+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F6&related=ericwastl&hashtags=Adven
-tOfCode
-[9]: javascript:void(0);
+[7]: /2022
+[8]: 6/input
+[9]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Tuning+Trouble%22+%2D+Day+6+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2
+Fday%2F6&related=ericwastl&hashtags=AdventOfCode
+[10]: javascript:void(0);
 
