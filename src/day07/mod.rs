@@ -143,7 +143,16 @@ pub fn solve(input: &[u8]) -> (String, String) {
     }
 
     let part1: u64 = dirs.values().filter(|&&x| x <= 100000).sum();
-    let part2: i64 = 0;
+
+    let total: u64 = 70000000;
+    let free: u64 = total
+        - dirs[&Directory {
+            path: String::from("/"),
+        }];
+    let update_size: u64 = 30000000;
+    let need_to_free = update_size - free;
+
+    let part2 = dirs.values().filter(|&&x| x >= need_to_free).min().unwrap();
 
     (part1.to_string(), part2.to_string())
 }
@@ -195,6 +204,6 @@ $ ls
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("2061777", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("4473403", answer.1);
     }
 }

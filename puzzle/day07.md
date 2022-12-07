@@ -90,8 +90,6 @@ Find all of the directories with a total size of at most 100000. *What is the su
 
 Your puzzle answer was `2061777`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 Now, you're ready to choose a directory to delete.
@@ -112,13 +110,18 @@ Directories `e` and `a` are both too small; deleting them would not free up enou
 
 Find the smallest directory that, if deleted, would free up enough space on the filesystem to run the update. *What is the total size of that directory?*
 
-Answer:
+Your puzzle answer was `4473403`.
 
-Although it hasn't changed, you can still [get your puzzle input][1].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][2] [Mastodon][3]] this puzzle.
+At this point, you should [return to your Advent calendar][1] and try another puzzle.
 
-[1]: 7/input
-[2]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22No+Space+Left+On+Device%22+%2D+Day+7+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F7&related=ericwastl&hashtags=AdventOfCode
-[3]: javascript:void(0);
+If you still want to see it, you can [get your puzzle input][2].
+
+You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+
+[1]: /2022
+[2]: 7/input
+[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22No+Space+Left+On+Device%22+%2D+Day+7+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F7&related=ericwastl&hashtags=AdventOfCode
+[4]: javascript:void(0);
 
