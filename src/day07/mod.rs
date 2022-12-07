@@ -9,36 +9,35 @@ struct Directory {
 }
 
 impl Directory {
+    pub fn new(start: &str) -> Directory {
+        let mut path = String::with_capacity(1024);
+        path.push_str(start);
+        Directory { path }
+    }
+
     pub fn is_root(&self) -> bool {
         return self.path.len() == 1;
     }
 
-    // TODO: make mutable
-    pub fn parent(&self) -> Directory {
-        debug!("going to parent of {}", self.path);
-        let pos = self.path.rfind("/").unwrap();
-        if pos == 0 {
-            return Directory {
-                path: String::from("/"),
-            };
-        }
-        Directory {
-            path: self.path[0..pos].to_string(),
-        }
+    pub fn go_to_root(&mut self) {
+        self.path.truncate(1);
     }
 
-    // TODO: make mutable
-    pub fn enter(&self, other: &str) -> Directory {
-        debug!("Entering {other}");
-        let n = self.path.len();
-        let pos = if self.path.chars().last() == Some('/') {
-            n - 1
-        } else {
-            n
-        };
-        Directory {
-            path: format!("{}/{}", &self.path[0..pos], other),
+    pub fn parent(&mut self) {
+        debug!("going to parent of {}", self.path);
+        let mut pos = self.path.rfind("/").unwrap();
+        if pos == 0 {
+            pos = 1;
         }
+        self.path.truncate(pos);
+    }
+
+    pub fn enter(&mut self, other: &str) {
+        debug!("Entering {other}");
+        if !self.is_root() {
+            self.path.push('/');
+        }
+        self.path.push_str(other);
     }
 }
 
@@ -46,8 +45,8 @@ pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
 
     let mut dirs: AHashMap<Directory, u64> = AHashMap::with_capacity(128);
-    let start = String::with_capacity(1024);
-    let mut cwd = Directory { path: start };
+    let start = "/";
+    let mut cwd = Directory::new(start);
 
     while !input.is_empty() {
         debug!("=== parsing line ===");
@@ -66,15 +65,13 @@ pub fn solve(input: &[u8]) -> (String, String) {
                     trace!("$ cd {}", String::from_utf8_lossy(dest));
                     match dest {
                         b".." => {
-                            cwd = cwd.parent();
+                            cwd.parent();
                         }
                         b"/" => {
-                            cwd = Directory {
-                                path: String::from("/"),
-                            }
+                            cwd.go_to_root();
                         }
                         _ => {
-                            cwd = cwd.enter(&String::from_utf8_lossy(dest));
+                            cwd.enter(&String::from_utf8_lossy(dest));
                         }
                     }
 
@@ -122,7 +119,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
                                         if tmp.is_root() {
                                             break;
                                         }
-                                        tmp = tmp.parent();
+                                        tmp.parent();
                                     }
                                 }
                                 input = rest;
@@ -136,10 +133,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
             }
         }
         debug!("cwd: {:?}", cwd);
-    }
-    debug!("=== dirs ====");
-    for (k, v) in &dirs {
-        debug!("{}: {:?}", k.path, v);
     }
 
     let part1: u64 = dirs.values().filter(|&&x| x <= 100000).sum();
@@ -163,14 +156,8 @@ mod tests {
 
     const DAY: i32 = 07;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example() {
-        init();
-
         let input = b"$ cd /
 $ ls
 dir a
