@@ -57,14 +57,8 @@ mod tests {
 
     const DAY: i32 = 04;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example() {
-        init();
-
         let input = b"2-4,6-8
 2-3,4-5
 5-7,7-9
