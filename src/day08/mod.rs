@@ -1,5 +1,4 @@
 use ahash::AHashSet;
-use log::debug;
 
 use aoc_lib::parse;
 
@@ -24,7 +23,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
         input = parse::seek_next_line(input);
     }
-    debug!("rows: {rows}, cols: {cols}");
 
     let mut visible: AHashSet<(u32, u32)> = AHashSet::with_capacity(MAX_COLS * MAX_ROWS);
 
@@ -83,10 +81,57 @@ pub fn solve(input: &[u8]) -> (String, String) {
             }
         }
     }
-
     let part1 = visible.len();
-    let part2: i64 = 42;
 
+    // part 2
+    let mut part2: u32 = 0;
+    for y in 0..rows {
+        for x in 0..cols {
+            let value = unsafe { *grid.get_unchecked(y as usize).get_unchecked(x as usize) };
+            let scenic_up = (0..y)
+                .rev()
+                .find(|&y_above| unsafe {
+                    *grid
+                        .get_unchecked(y_above as usize)
+                        .get_unchecked(x as usize)
+                        >= value
+                })
+                .map(|y_first_bad| y - y_first_bad)
+                .unwrap_or(y);
+            let scenic_down = (y + 1..rows)
+                .find(|&y_down| unsafe {
+                    *grid
+                        .get_unchecked(y_down as usize)
+                        .get_unchecked(x as usize)
+                        >= value
+                })
+                .map(|y_first_bad| y_first_bad - y)
+                .unwrap_or((rows - 1) - y);
+            let scenic_left = (0..x)
+                .rev()
+                .find(|&x_left| unsafe {
+                    *grid
+                        .get_unchecked(y as usize)
+                        .get_unchecked(x_left as usize)
+                        >= value
+                })
+                .map(|x_first_bad| x - x_first_bad)
+                .unwrap_or(x);
+            let scenic_right = (x + 1..cols)
+                .find(|&x_right| unsafe {
+                    *grid
+                        .get_unchecked(y as usize)
+                        .get_unchecked(x_right as usize)
+                        >= value
+                })
+                .map(|x_first_bad| x_first_bad - x)
+                .unwrap_or((cols - 1) - x);
+            let scenic_score = scenic_left * scenic_right * scenic_up * scenic_down;
+            if scenic_score > part2 {
+                part2 = scenic_score;
+            }
+        }
+    }
     (part1.to_string(), part2.to_string())
 }
 
@@ -96,14 +141,8 @@ mod tests {
 
     const DAY: i32 = 08;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
-    fn part1_example() {
-        init();
-
+    fn example() {
         let input = b"30373
 25512
 65332
@@ -112,23 +151,13 @@ mod tests {
 ";
         let solution = solve(input);
         assert_eq!("21", solution.0);
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
+        assert_eq!("8", solution.1);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("1814", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!("330786", answer.1);
     }
 }

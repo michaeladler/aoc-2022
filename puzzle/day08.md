@@ -35,8 +35,6 @@ Consider your map; *how many trees are visible from outside the grid?*
 
 Your puzzle answer was `1814`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 Content with the amount of tree cover available, the Elves just need to know the best spot to build their tree house: they would like to be able to see a lot of *trees*.
@@ -80,16 +78,21 @@ This tree's scenic score is `*8*` (`2 * 2 * 1 * 2`); this is the ideal spot for 
 
 Consider each tree on your map. *What is the highest scenic score possible for any tree?*
 
-Answer:
+Your puzzle answer was `330786`.
 
-Although it hasn't changed, you can still [get your puzzle input][4].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][5] [Mastodon][6]] this puzzle.
+At this point, you should [return to your Advent calendar][4] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][5].
+
+You can also [Shareon [Twitter][6] [Mastodon][7]] this puzzle.
 
 [1]: https://en.wikipedia.org/wiki/Tree_house
 [2]: https://en.wikipedia.org/wiki/Quadcopter
 [3]: https://en.wikipedia.org/wiki/Eaves
-[4]: 8/input
-[5]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Treetop+Tree+House%22+%2D+Day+8+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F8&related=ericwastl&hashtags=AdventOfCode
-[6]: javascript:void(0);
+[4]: /2022
+[5]: 8/input
+[6]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Treetop+Tree+House%22+%2D+Day+8+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F8&related=ericwastl&hashtags=AdventOfCode
+[7]: javascript:void(0);
 
