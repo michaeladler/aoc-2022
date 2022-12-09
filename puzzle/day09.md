@@ -1,24 +1,18 @@
 
 ## --- Day 9: Rope Bridge ---
 
-This rope bridge creaks as you walk along it. You aren't sure how old it is, or whether it can even support your
-weight.
+This rope bridge creaks as you walk along it. You aren't sure how old it is, or whether it can even support your weight.
 
-It seems to support the Elves just fine, though. The bridge spans a gorge which was carved out by the massive river far
-below you.
+It seems to support the Elves just fine, though. The bridge spans a gorge which was carved out by the massive river far below you.
 
-You step carefully; as you do, the ropes stretch and twist. You decide to distract yourself by modeling rope physics;
-maybe you can even figure out where *not* to step.
+You step carefully; as you do, the ropes stretch and twist. You decide to distract yourself by modeling rope physics; maybe you can even figure out where *not* to step.
 
-Consider a rope with a knot at each end; these knots mark the *head* and the *tail* of the rope. If the head moves far
-enough away from the tail, the tail is pulled toward the head.
+Consider a rope with a knot at each end; these knots mark the *head* and the *tail* of the rope. If the head moves far enough away from the tail, the tail is pulled toward the head.
 
-Due to nebulous reasoning involving [Planck lengths][1], you should be able to model the positions of the knots on a
-two-dimensional grid. Then, by following a hypothetical *series of motions* (your puzzle input) for the head, you can
+Due to nebulous reasoning involving [Planck lengths][1], you should be able to model the positions of the knots on a two-dimensional grid. Then, by following a hypothetical *series of motions* (your puzzle input) for the head, you can
 determine how the tail will move.
 
-Due to the aforementioned Planck lengths, the rope must be quite short; in fact, the head (`H`) and tail (`T`) must
-*always be touching* (diagonally adjacent and even overlapping both count as touching):
+Due to the aforementioned Planck lengths, the rope must be quite short; in fact, the head (`H`) and tail (`T`) must *always be touching* (diagonally adjacent and even overlapping both count as touching):
 
 `....
 .TH.
@@ -32,8 +26,7 @@ Due to the aforementioned Planck lengths, the rope must be quite short; in fact,
 ...
 `
 
-If the head is ever two steps directly up, down, left, or right from the tail, the tail must also move one step in that
-direction so it remains close enough:
+If the head is ever two steps directly up, down, left, or right from the tail, the tail must also move one step in that direction so it remains close enough:
 
 `.....    .....    .....
 .TH.. -> .T.H. -> ..TH.
@@ -45,8 +38,7 @@ direction so it remains close enough:
 ...    ...    ...
 `
 
-Otherwise, if the head and tail aren't touching and aren't in the same row or column, the tail always moves one step
-diagonally to keep up:
+Otherwise, if the head and tail aren't touching and aren't in the same row or column, the tail always moves one step diagonally to keep up:
 
 `.....    .....    .....
 .....    ..H..    ..H..
@@ -60,8 +52,7 @@ diagonally to keep up:
 .....    .....    .....
 `
 
-You just need to work out where the tail goes as the head follows a series of motions. Assume the head and the tail
-both start at the same position, overlapping.
+You just need to work out where the tail goes as the head follows a series of motions. Assume the head and the tail both start at the same position, overlapping.
 
 For example:
 
@@ -75,10 +66,8 @@ L 5
 R 2
 `
 
-This series of motions moves the head *right* four steps, then *up* four steps, then *left* three steps, then *down*
-one step, and so on. After each step, you'll need to update the position of the tail if the step means the head is no
-longer adjacent to the tail. Visually, these motions occur as follows (`s` marks the starting position as a reference
-point):
+This series of motions moves the head *right* four steps, then *up* four steps, then *left* three steps, then *down* one step, and so on. After each step, you'll need to update the position of the tail if the step means the head is no
+longer adjacent to the tail. Visually, these motions occur as follows (`s` marks the starting position as a reference point):
 
 `== Initial State ==
 ......
@@ -216,8 +205,7 @@ s.....
 s.....
 `
 
-After simulating the rope, you can count up all of the positions the *tail visited at least once*. In this diagram, `s`
-again marks the starting position (which the tail also visited) and `#` marks other positions the tail visited:
+After simulating the rope, you can count up all of the positions the *tail visited at least once*. In this diagram, `s` again marks the starting position (which the tail also visited) and `#` marks other positions the tail visited:
 
 `..##..
 ...##.
@@ -228,27 +216,20 @@ s###..
 
 So, there are `*13*` positions the tail visited at least once.
 
-Simulate your complete hypothetical series of motions. *How many positions does the tail of the rope visit at least
-once?*
+Simulate your complete hypothetical series of motions. *How many positions does the tail of the rope visit at least once?*
 
 Your puzzle answer was `5902`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
-A rope snaps! Suddenly, the river is getting a lot closer than you remember. The bridge is still there, but some of the
-ropes that broke are now whipping toward you as you fall through the air!
+A rope snaps! Suddenly, the river is getting a lot closer than you remember. The bridge is still there, but some of the ropes that broke are now whipping toward you as you fall through the air!
 
-The ropes are moving too quickly to grab; you only have a few seconds to choose how to arch your body to avoid being
-hit. Fortunately, your simulation can be extended to support longer ropes.
+The ropes are moving too quickly to grab; you only have a few seconds to choose how to arch your body to avoid being hit. Fortunately, your simulation can be extended to support longer ropes.
 
-Rather than two knots, you now must simulate a rope consisting of *ten* knots. One knot is still the head of the rope
-and moves according to the series of motions. Each knot further down the rope follows the knot in front of it using the
+Rather than two knots, you now must simulate a rope consisting of *ten* knots. One knot is still the head of the rope and moves according to the series of motions. Each knot further down the rope follows the knot in front of it using the
 same rules as before.
 
-Using the same series of motions as the above example, but with the knots marked `H`, `1`, `2`, ..., `9`, the motions
-now occur as follows:
+Using the same series of motions as the above example, but with the knots marked `H`, `1`, `2`, ..., `9`, the motions now occur as follows:
 
 `== Initial State ==
 ......
@@ -386,9 +367,8 @@ H123..  (2 covers 4)
 6.....  (6 covers 7, 8, 9, s)
 `
 
-Now, you need to keep track of the positions the new tail, `9`, visits. In this example, the tail never moves, and so
-it only visits `*1*` position. However, *be careful*: more types of motion are possible than before, so you might want
-to visually compare your simulated rope to the one above.
+Now, you need to keep track of the positions the new tail, `9`, visits. In this example, the tail never moves, and so it only visits `*1*` position. However, *be careful*: more types of motion are possible than before, so you might want to
+visually compare your simulated rope to the one above.
 
 Here's a larger example:
 
@@ -629,18 +609,21 @@ Now, the tail (`9`) visits `*36*` positions (including `s`) at least once:
 .........########.........
 `
 
-Simulate your complete series of motions on a larger rope with ten knots. *How many positions does the tail of the rope
-visit at least once?*
+Simulate your complete series of motions on a larger rope with ten knots. *How many positions does the tail of the rope visit at least once?*
 
-Answer:
+Your puzzle answer was `2445`.
 
-Although it hasn't changed, you can still [get your puzzle input][2].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+At this point, you should [return to your Advent calendar][2] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][3].
+
+You can also [Shareon [Twitter][4] [Mastodon][5]] this puzzle.
 
 [1]: https://en.wikipedia.org/wiki/Planck_units#Planck_length
-[2]: 9/input
-[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Rope+Bridge%22+%2D+Day+9+%2D+Advent+of+Code+
-2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F9&related=ericwastl&hashtags=AdventOfCode
-[4]: javascript:void(0);
+[2]: /2022
+[3]: 9/input
+[4]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Rope+Bridge%22+%2D+Day+9+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F9&related=ericwastl&hashtags=AdventOfCode
+[5]: javascript:void(0);
 
