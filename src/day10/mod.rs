@@ -1,3 +1,4 @@
+use advent_of_code_ocr::parse_string_to_letters;
 use log::debug;
 
 use aoc_lib::parse;
@@ -71,14 +72,14 @@ pub fn solve(input: &[u8]) -> (String, String) {
         input = parse::seek_next_line(input);
     }
 
+    let mut s = String::with_capacity(COLS * ROWS + ROWS);
     for row in crt {
         for b in row {
-            print!("{}", b as char);
+            s.push(b as char);
         }
-        println!();
+        s.push('\n');
     }
-
-    let part2: i64 = 0;
+    let part2 = parse_string_to_letters(&s);
 
     (part1.to_string(), part2.to_string())
 }
@@ -268,5 +269,6 @@ noop
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("11960", answer.0);
+        assert_eq!("EJCFPGLH", answer.1);
     }
 }
