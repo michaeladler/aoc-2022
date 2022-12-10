@@ -22,7 +22,7 @@ fn helper(input: &[u8], n: usize) -> usize {
         }
         prev_chars.clear();
     }
-    return 0;
+    0
 }
 
 #[cfg(test)]

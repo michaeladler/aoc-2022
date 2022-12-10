@@ -41,5 +41,5 @@ fn main() {
         }
     }
 
-    writeln!(handle, "\nTotal: {:.3} ms", total_ms).unwrap();
+    writeln!(handle, "\nTotal: {total_ms:.3} ms").unwrap();
 }

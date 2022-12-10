@@ -16,7 +16,7 @@ impl Directory {
     }
 
     pub fn is_root(&self) -> bool {
-        return self.path.len() == 1;
+        self.path.len() == 1
     }
 
     pub fn go_to_root(&mut self) {
@@ -25,7 +25,7 @@ impl Directory {
 
     pub fn parent(&mut self) {
         debug!("going to parent of {}", self.path);
-        let mut pos = self.path.rfind("/").unwrap();
+        let mut pos = self.path.rfind('/').unwrap();
         if pos == 0 {
             pos = 1;
         }

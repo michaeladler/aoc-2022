@@ -81,7 +81,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
     }
     let part2 = parse_string_to_letters(&s);
 
-    (part1.to_string(), part2.to_string())
+    (part1.to_string(), part2)
 }
 
 /// returns (row, col)

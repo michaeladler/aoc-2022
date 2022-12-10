@@ -14,7 +14,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
                 input = &input[i..];
                 break;
             }
-            if b >= b'A' && b <= b'Z' {
+            if (b'A'..=b'Z').contains(&b) {
                 let entry = stacks_tmp.entry(i);
                 entry
                     .or_insert_with(|| VecDeque::with_capacity(10))
@@ -64,14 +64,14 @@ pub fn solve(input: &[u8]) -> (String, String) {
 
     let mut part1_helper: Vec<u8> = Vec::with_capacity(stacks.len());
     for deque in stacks {
-        let c = deque.get(deque.len() - 1).unwrap();
+        let c = deque.back().unwrap();
         part1_helper.push(*c as u8);
     }
     let part1 = String::from_utf8_lossy(&part1_helper);
 
     let mut part2_helper: Vec<u8> = Vec::with_capacity(stacks2.len());
     for deque in stacks2 {
-        let c = deque.get(deque.len() - 1).unwrap();
+        let c = deque.back().unwrap();
         part2_helper.push(*c as u8);
     }
     let part2 = String::from_utf8_lossy(&part2_helper);
