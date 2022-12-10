@@ -5,25 +5,48 @@ use aoc_lib::parse;
 #[derive(Debug)]
 struct Addx(i64);
 
+const COLS: usize = 40;
+const ROWS: usize = 6;
+
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
 
     let mut x: i64 = 1;
-    let mut cycle: i64 = 1;
+    let mut cycle: usize = 1;
 
     let mut part1: i64 = 0;
 
+    const LIT: u8 = b'#';
+    const BLACK: u8 = b'.';
+
+    let mut crt: [[u8; COLS]; ROWS] = [[BLACK; COLS]; ROWS];
+
     while !input.is_empty() {
-        debug!("cycle {cycle} begins. x={x}");
+        debug!("Start cycle {cycle}");
+        {
+            // part 2
+            let (row, col) = cycle_to_coords(cycle);
+            if sprite_visible(col, x) {
+                crt[row][col] = LIT;
+            }
+        }
+
         match input[0] {
             b'a' => {
                 // addx
                 let (rest, n) = parse::integer(&input[5..], false).unwrap();
-                debug!("addx {n}");
+                debug!("begin executing addx {n}");
                 input = rest;
                 cycle += 1;
+                {
+                    // part 2
+                    let (row, col) = cycle_to_coords(cycle);
+                    if sprite_visible(col, x) {
+                        crt[row][col] = LIT;
+                    }
+                }
                 if cycle % 40 == 20 {
-                    part1 += x * cycle;
+                    part1 += x * (cycle as i64);
                 }
                 x += n;
             }
@@ -33,17 +56,44 @@ pub fn solve(input: &[u8]) -> (String, String) {
             _ => panic!("invalid input"),
         }
         cycle += 1;
-        if cycle % 40 == 20 {
-            part1 += x * cycle;
+        {
+            // part 2
+            let (row, col) = cycle_to_coords(cycle);
+            if sprite_visible(col, x) {
+                crt[row][col] = LIT;
+            }
         }
-        debug!("cycle {cycle} ends.");
+
+        if cycle % 40 == 20 {
+            part1 += x * (cycle as i64);
+        }
 
         input = parse::seek_next_line(input);
     }
-    debug!("finished program. cycle: {cycle}, x: {x}");
-    let part2: i64 = 42;
+
+    for row in crt {
+        for b in row {
+            print!("{}", b as char);
+        }
+        println!();
+    }
+
+    let part2: i64 = 0;
 
     (part1.to_string(), part2.to_string())
+}
+
+/// returns (row, col)
+fn cycle_to_coords(cycle: usize) -> (usize, usize) {
+    let cycle = cycle - 1;
+    let row = cycle / COLS;
+    let col = cycle % COLS;
+    (row, col)
+}
+
+fn sprite_visible(col: usize, x: i64) -> bool {
+    let col = col as i64;
+    x - 1 <= col && col <= x + 1
 }
 
 #[cfg(test)]
@@ -52,14 +102,8 @@ mod tests {
 
     const DAY: i32 = 10;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example() {
-        init();
-
         let input = b"addx 15
 addx -11
 addx 6
@@ -212,9 +256,17 @@ noop
     }
 
     #[test]
+    fn test_cycle_to_coords() {
+        assert_eq!((0, 0), cycle_to_coords(1));
+        assert_eq!((0, 39), cycle_to_coords(40));
+        assert_eq!((1, 0), cycle_to_coords(41));
+        assert_eq!((1, 39), cycle_to_coords(80));
+        assert_eq!((5, 0), cycle_to_coords(201));
+    }
+
+    #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("11960", answer.0);
-        //assert_eq!("42", answer.1);
     }
 }
