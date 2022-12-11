@@ -5,7 +5,7 @@ use log::debug;
 
 use aoc_lib::parse;
 
-type N = i32;
+type N = i64;
 
 #[derive(Debug, Copy, Clone)]
 enum Operation {
@@ -25,13 +25,13 @@ impl Operation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Monkey {
     items: VecDeque<N>,
     operation: Operation,
     divisor: N,
-    dest_true: usize,
-    dest_false: usize,
+    dest_true: u16,
+    dest_false: u16,
 }
 
 pub fn solve(input: &[u8]) -> (String, String) {
@@ -104,8 +104,8 @@ pub fn solve(input: &[u8]) -> (String, String) {
                 items,
                 operation,
                 divisor: test as N,
-                dest_true: dest_true as usize,
-                dest_false: dest_false as usize,
+                dest_true: dest_true as u16,
+                dest_false: dest_false as u16,
             };
             monkeys.push(monkey);
         }
@@ -113,12 +113,22 @@ pub fn solve(input: &[u8]) -> (String, String) {
         input = parse::seek_next_line(input);
     }
     debug!("monkeys: {:?}", monkeys);
+    let monkeys2 = monkeys.clone();
+
+    let part1 = helper(monkeys, 20, true);
+    let part2 = helper(monkeys2, 10000, false);
+
+    (part1.to_string(), part2.to_string())
+}
+
+fn helper(mut monkeys: ArrayVec<Monkey, 8>, max_rounds: u32, is_part1: bool) -> u64 {
     let mut inspection_counters: ArrayVec<u64, 8> = ArrayVec::new();
     for _i in 0..monkeys.len() {
         inspection_counters.push(0);
     }
 
-    let max_rounds = 20;
+    // NOTE: each divisor is a prime number, so the lcm is just the product
+    let lcm: N = monkeys.iter().map(|monkey| monkey.divisor).product();
     let n = monkeys.len();
     for round_number in 1..=max_rounds {
         debug!("=== Round {round_number}");
@@ -132,12 +142,15 @@ pub fn solve(input: &[u8]) -> (String, String) {
                 let counter = unsafe { inspection_counters.get_unchecked_mut(i) };
                 *counter += 1;
 
-                let new_level = sender.operation.apply(level);
+                let mut new_level = sender.operation.apply(level);
                 debug!("    Worry level increases to {new_level}.");
-                let new_level = new_level / 3;
-                debug!(
-                    "    Monkey gets bored with item. Worry level is divided by 3 to {new_level}."
-                );
+                if is_part1 {
+                    new_level = new_level / 3;
+                    debug!("    Monkey gets bored with item. Worry level is divided by 3 to {new_level}.");
+                }
+                // NOTE: this is the key observation: we can work in Z/nZ where n = lcm due to
+                // Chinese Remainder Theorem
+                new_level = new_level % lcm;
                 let dest = if new_level % sender.divisor == 0 {
                     debug!(
                         "    Current worry level is divisible by {}.",
@@ -152,19 +165,14 @@ pub fn solve(input: &[u8]) -> (String, String) {
                     sender.dest_false
                 };
                 debug!("    Item with worry level {new_level} is thrown to monkey {dest}.");
-                let receiver = unsafe { monkeys.get_unchecked_mut(dest) };
+                let receiver = unsafe { monkeys.get_unchecked_mut(dest as usize) };
                 receiver.items.push_back(new_level);
             }
         }
     }
-
     inspection_counters.sort_unstable();
     let n = inspection_counters.len();
-
-    let part1 = inspection_counters[n - 1] * inspection_counters[n - 2];
-    let part2: i64 = 42;
-
-    (part1.to_string(), part2.to_string())
+    inspection_counters[n - 1] * inspection_counters[n - 2]
 }
 
 #[cfg(test)]
@@ -173,14 +181,8 @@ mod tests {
 
     const DAY: i32 = 11;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
-    fn part1_example() {
-        init();
-
+    fn example() {
         let input = b"Monkey 0:
   Starting items: 79, 98
   Operation: new = old * 19
@@ -210,24 +212,14 @@ Monkey 3:
     If false: throw to monkey 1
 ";
         let solution = solve(input);
-        assert_eq!("10605", solution.0);
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
+        assert_eq!("10605", solution.0, "part 1");
+        assert_eq!("2713310158", solution.1, "part 2");
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("90882", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!("30893109657", answer.1);
     }
 }
