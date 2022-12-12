@@ -2,6 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn benchmark_aoc(c: &mut Criterion) {
     // marker
+    c.bench_function("day12", |b| b.iter(|| black_box(aoc::solve(12))));
     c.bench_function("day11", |b| b.iter(|| black_box(aoc::solve(11))));
     c.bench_function("day10", |b| b.iter(|| black_box(aoc::solve(10))));
     c.bench_function("day09", |b| b.iter(|| black_box(aoc::solve(9))));
