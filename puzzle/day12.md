@@ -43,8 +43,6 @@ This path reaches the goal in `*31*` steps, the fewest possible.
 
 Your puzzle answer was `534`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 As you walk up the hill, you suspect that the Elves will want to turn this into a hiking trail. The beginning isn't very scenic, though; perhaps you can find
@@ -77,14 +75,19 @@ This path reaches the goal in only `*29*` steps, the fewest possible.
 
 *What is the fewest steps required to move starting from any square with elevation `a` to the location that should get the best signal?*
 
-Answer:
+Your puzzle answer was `525`.
 
-Although it hasn't changed, you can still [get your puzzle input][1].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][2] [Mastodon][3]] this puzzle.
+At this point, you should [return to your Advent calendar][1] and try another puzzle.
 
-[1]: 12/input
-[2]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Hill+Climbing+Algorithm%22+%2D+Day+12+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadv
-entofcode%2Ecom%2F2022%2Fday%2F12&related=ericwastl&hashtags=AdventOfCode
-[3]: javascript:void(0);
+If you still want to see it, you can [get your puzzle input][2].
+
+You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+
+[1]: /2022
+[2]: 12/input
+[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Hill+Climbing+Algorithm%22+%2D+Day+12+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2E
+com%2F2022%2Fday%2F12&related=ericwastl&hashtags=AdventOfCode
+[4]: javascript:void(0);
 

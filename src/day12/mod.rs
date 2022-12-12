@@ -1,7 +1,7 @@
 use ahash::AHashMap;
 use binary_heap_plus::BinaryHeap;
 use log::debug;
-use std::{collections::VecDeque, fmt};
+use std::fmt;
 
 const MAX_ROWS: usize = 163;
 const MAX_COLS: usize = 163;
@@ -117,26 +117,6 @@ impl Grid {
                 }
             }
         }
-        debug!("dijkstra finished");
-
-        // print path
-        let mut path: VecDeque<Point> = VecDeque::with_capacity(128);
-        path.push_back(end);
-        let mut node = &end;
-        while let Some(prev_node) = prev.get(node) {
-            path.push_front(*prev_node);
-            node = prev_node;
-        }
-        debug!("path:");
-        for p in path.iter() {
-            debug!(
-                "row {}, col {}, elevation {}",
-                p.y,
-                p.x,
-                self.get(p.y as usize, p.x as usize)
-            );
-        }
-
         dist.get(&end).cloned()
     }
 }
@@ -161,9 +141,29 @@ impl fmt::Display for Grid {
 pub fn solve(input: &[u8]) -> (String, String) {
     let grid = parse_input(input);
     debug!("{}", grid);
-    let part1 = grid.shortest_distance(grid.start, grid.end).unwrap();
-    let part2: i64 = 42;
+    let mut alt_starts = Vec::with_capacity(64);
+    for (y, row) in grid.grid.iter().enumerate().take(grid.rows) {
+        for (x, &elevation) in row.iter().enumerate().take(grid.cols) {
+            if elevation == 'a' {
+                let p = Point {
+                    x: x as i32,
+                    y: y as i32,
+                };
+                if p != grid.start {
+                    alt_starts.push(p);
+                }
+            }
+        }
+    }
 
+    let part1 = grid.shortest_distance(grid.start, grid.end).unwrap();
+    let mut part2 = part1;
+    for start in alt_starts {
+        let d = grid.shortest_distance(start, grid.end).unwrap();
+        if d < part2 {
+            part2 = d;
+        }
+    }
     (part1.to_string(), part2.to_string())
 }
 
@@ -215,10 +215,6 @@ acctuvwj
 abdefghi
 ";
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn test_edges() {
         let grid = parse_input(EXAMPLE);
@@ -229,25 +225,15 @@ abdefghi
 
     #[test]
     fn example() {
-        init();
         let solution = solve(EXAMPLE);
         assert_eq!("31", solution.0);
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
+        assert_eq!("29", solution.1);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("534", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("525", answer.1);
     }
 }
