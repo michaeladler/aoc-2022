@@ -1,6 +1,5 @@
-use binary_heap_plus::BinaryHeap;
 use log::debug;
-use std::fmt;
+use std::{collections::VecDeque, fmt};
 
 const MAX_ROWS: usize = 163;
 const MAX_COLS: usize = 163;
@@ -74,11 +73,11 @@ impl Grid {
     }
 
     pub fn shortest_distance(&self, start: Point, end: Point) -> i64 {
-        // dijkstra
+        // like dijkstra but uses VecDeque instead of PriorityQueue due to edge weight 1
         const INFINITY: i64 = i64::MAX;
         const NO_PREV: i64 = -1;
         let max_nodes = self.rows * self.cols;
-        let mut queue = BinaryHeap::with_capacity_min(max_nodes);
+        let mut queue = VecDeque::with_capacity(max_nodes);
         let mut dist: Vec<i64> = Vec::with_capacity(max_nodes);
         let mut prev: Vec<i64> = Vec::with_capacity(max_nodes);
 
@@ -93,9 +92,9 @@ impl Grid {
 
         let edge_weight: i64 = 1;
         let mut neighbors = Vec::with_capacity(4);
-        queue.push((0, start));
+        queue.push_back((0, start));
         // pop point p closest to start; its distance is d.
-        while let Some((_d, u)) = queue.pop() {
+        while let Some((_d, u)) = queue.pop_front() {
             self.edges(u.y as usize, u.x as usize, &mut neighbors);
             for &v in neighbors.iter() {
                 let u_1d = self.two_dim_to_one_dim(u);
@@ -109,7 +108,7 @@ impl Grid {
                     // found shorter path
                     dist[v_1d] = alt;
                     prev[v_1d] = u_1d as i64;
-                    queue.push((alt, v));
+                    queue.push_back((alt, v));
                 }
             }
         }
