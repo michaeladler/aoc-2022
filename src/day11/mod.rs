@@ -145,12 +145,12 @@ fn helper(mut monkeys: ArrayVec<Monkey, 8>, max_rounds: u32, is_part1: bool) -> 
                 let mut new_level = sender.operation.apply(level);
                 debug!("    Worry level increases to {new_level}.");
                 if is_part1 {
-                    new_level = new_level / 3;
+                    new_level /= 3;
                     debug!("    Monkey gets bored with item. Worry level is divided by 3 to {new_level}.");
                 }
                 // NOTE: this is the key observation: we can work in Z/nZ where n = lcm due to
                 // Chinese Remainder Theorem
-                new_level = new_level % lcm;
+                new_level %= lcm;
                 let dest = if new_level % sender.divisor == 0 {
                     debug!(
                         "    Current worry level is divisible by {}.",

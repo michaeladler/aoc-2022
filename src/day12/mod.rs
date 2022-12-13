@@ -123,16 +123,16 @@ impl Grid {
 
 impl fmt::Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        write!(
+        writeln!(
             f,
-            "Grid (rows: {}, cols: {}, start: {:?}, dest: {:?}):\n",
+            "Grid (rows: {}, cols: {}, start: {:?}, dest: {:?}):",
             self.rows, self.cols, self.start, self.end
         )?;
         for row in self.grid.iter().take(self.rows) {
             for col in row.iter().take(self.cols) {
                 write!(f, "{}", col)?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }
