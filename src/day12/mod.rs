@@ -1,4 +1,3 @@
-use ahash::AHashMap;
 use binary_heap_plus::BinaryHeap;
 use log::debug;
 use std::fmt;
@@ -74,27 +73,22 @@ impl Grid {
         unsafe { *self.grid.get_unchecked(y).get_unchecked(x) }
     }
 
-    pub fn shortest_distance(&self, start: Point, end: Point) -> Option<i64> {
+    pub fn shortest_distance(&self, start: Point, end: Point) -> i64 {
+        // dijkstra
         const INFINITY: i64 = i64::MAX;
-        let mut queue = BinaryHeap::with_capacity_min(self.rows * self.cols);
-        // TODO: use an array instead, offset = y * cols + x
-        let mut dist: AHashMap<Point, i64> = AHashMap::with_capacity(self.rows * self.cols);
-        let mut prev: AHashMap<Point, Point> = AHashMap::with_capacity(self.rows * self.cols);
+        const NO_PREV: i64 = -1;
+        let max_nodes = self.rows * self.cols;
+        let mut queue = BinaryHeap::with_capacity_min(max_nodes);
+        let mut dist: Vec<i64> = Vec::with_capacity(max_nodes);
+        let mut prev: Vec<i64> = Vec::with_capacity(max_nodes);
 
         {
             // init distances
-            dist.insert(start, 0);
-            for (y, row) in self.grid.iter().enumerate() {
-                for (x, _) in row.iter().enumerate() {
-                    let p = Point {
-                        x: x as i32,
-                        y: y as i32,
-                    };
-                    if p != start {
-                        dist.insert(p, INFINITY);
-                    }
-                }
+            for _i in 0..max_nodes {
+                dist.push(INFINITY);
+                prev.push(NO_PREV);
             }
+            dist[self.two_dim_to_one_dim(start)] = 0;
         }
 
         let edge_weight: i64 = 1;
@@ -104,20 +98,30 @@ impl Grid {
         while let Some((_d, u)) = queue.pop() {
             self.edges(u.y as usize, u.x as usize, &mut neighbors);
             for &v in neighbors.iter() {
-                let alt = dist.get(&u).unwrap() + edge_weight;
-                if alt < *dist.get(&v).unwrap() {
+                let u_1d = self.two_dim_to_one_dim(u);
+                let v_1d = self.two_dim_to_one_dim(v);
+                let alt = dist[u_1d] + edge_weight;
+                if alt < dist[v_1d] {
                     debug!(
                         "found new shortest path to row {}, col {} with distance {}",
                         v.y, v.x, alt
                     );
                     // found shorter path
-                    dist.insert(v, alt);
-                    prev.insert(v, u);
+                    dist[v_1d] = alt;
+                    prev[v_1d] = u_1d as i64;
                     queue.push((alt, v));
                 }
             }
         }
-        dist.get(&end).cloned()
+        dist[self.two_dim_to_one_dim(end)]
+    }
+
+    // Convert 2d to 1d.
+    fn two_dim_to_one_dim(&self, p: Point) -> usize {
+        // the reverse is:
+        // x = offset % self.cols;
+        // y = offset / self.cols;
+        p.y as usize * self.cols + p.x as usize
     }
 }
 
@@ -156,10 +160,10 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
     }
 
-    let part1 = grid.shortest_distance(grid.start, grid.end).unwrap();
+    let part1 = grid.shortest_distance(grid.start, grid.end);
     let mut part2 = part1;
     for start in alt_starts {
-        let d = grid.shortest_distance(start, grid.end).unwrap();
+        let d = grid.shortest_distance(start, grid.end);
         if d < part2 {
             part2 = d;
         }
