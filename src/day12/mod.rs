@@ -41,7 +41,7 @@ impl Grid {
         self.cols = std::cmp::max(self.cols, x + 1);
     }
 
-    pub fn edges(&self, y: usize, x: usize, neighbors: &mut Vec<Point>) {
+    pub fn edges_reversed(&self, y: usize, x: usize, neighbors: &mut Vec<Point>) {
         neighbors.clear();
         let directions: [(i32, i32); 4] = [
             (0, -1), // top
@@ -59,8 +59,8 @@ impl Grid {
             {
                 let neighbor_elevation = self.get(new_y as usize, new_x as usize);
                 // the elevation of the destination square can be *at most one higher* than the elevation of your current square
-                if neighbor_elevation <= elevation
-                    || (elevation as u8) + 1 == (neighbor_elevation as u8)
+                if neighbor_elevation >= elevation
+                    || (elevation as u8) == (neighbor_elevation as u8) + 1
                 {
                     neighbors.push(Point { x: new_x, y: new_y });
                 }
@@ -72,20 +72,20 @@ impl Grid {
         unsafe { *self.grid.get_unchecked(y).get_unchecked(x) }
     }
 
-    pub fn shortest_distance(&self, start: Point, end: Point) -> i64 {
+    pub fn shortest_distances(&self, start: Point) -> Vec<i64> {
         // like dijkstra but uses VecDeque instead of PriorityQueue due to edge weight 1
         const INFINITY: i64 = i64::MAX;
-        const NO_PREV: i64 = -1;
+        //const NO_PREV: i64 = -1;
         let max_nodes = self.rows * self.cols;
         let mut queue = VecDeque::with_capacity(max_nodes);
         let mut dist: Vec<i64> = Vec::with_capacity(max_nodes);
-        let mut prev: Vec<i64> = Vec::with_capacity(max_nodes);
+        //let mut prev: Vec<i64> = Vec::with_capacity(max_nodes);
 
         {
             // init distances
             for _i in 0..max_nodes {
                 dist.push(INFINITY);
-                prev.push(NO_PREV);
+                //prev.push(NO_PREV);
             }
             dist[self.two_dim_to_one_dim(start)] = 0;
         }
@@ -95,7 +95,7 @@ impl Grid {
         queue.push_back((0, start));
         // pop point p closest to start; its distance is d.
         while let Some((_d, u)) = queue.pop_front() {
-            self.edges(u.y as usize, u.x as usize, &mut neighbors);
+            self.edges_reversed(u.y as usize, u.x as usize, &mut neighbors);
             for &v in neighbors.iter() {
                 let u_1d = self.two_dim_to_one_dim(u);
                 let v_1d = self.two_dim_to_one_dim(v);
@@ -107,19 +107,18 @@ impl Grid {
                     );
                     // found shorter path
                     dist[v_1d] = alt;
-                    prev[v_1d] = u_1d as i64;
+                    //prev[v_1d] = u_1d as i64;
                     queue.push_back((alt, v));
                 }
             }
         }
-        dist[self.two_dim_to_one_dim(end)]
+        dist
     }
 
     // Convert 2d to 1d.
-    fn two_dim_to_one_dim(&self, p: Point) -> usize {
+    pub fn two_dim_to_one_dim(&self, p: Point) -> usize {
         // the reverse is:
-        // x = offset % self.cols;
-        // y = offset / self.cols;
+        // (x, y) = (offset % self.cols, offset / self.cols);
         p.y as usize * self.cols + p.x as usize
     }
 }
@@ -159,10 +158,12 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
     }
 
-    let part1 = grid.shortest_distance(grid.start, grid.end);
+    let dist = grid.shortest_distances(grid.end);
+
+    let part1 = dist[grid.two_dim_to_one_dim(grid.start)];
     let mut part2 = part1;
     for start in alt_starts {
-        let d = grid.shortest_distance(start, grid.end);
+        let d = dist[grid.two_dim_to_one_dim(start)];
         if d < part2 {
             part2 = d;
         }
@@ -217,14 +218,6 @@ accszExk
 acctuvwj
 abdefghi
 ";
-
-    #[test]
-    fn test_edges() {
-        let grid = parse_input(EXAMPLE);
-        let mut neighbors = Vec::with_capacity(4);
-        grid.edges(0, 0, &mut neighbors);
-        assert_eq!(neighbors, vec![Point { x: 1, y: 0 }, Point { x: 0, y: 1 },])
-    }
 
     #[test]
     fn example() {
