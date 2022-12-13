@@ -106,8 +106,6 @@ Determine which pairs of packets are already in the right order. *What is the su
 
 Your puzzle answer was `6484`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 Now, you just need to put *all* of the packets in the right order. Disregard the blank lines in your list of received packets.
@@ -147,13 +145,18 @@ index 2, and so on.) In this example, the divider packets are *10th* and *14th*,
 
 Organize all of the packets into the correct order. *What is the decoder key for the distress signal?*
 
-Answer:
+Your puzzle answer was `19305`.
 
-Although it hasn't changed, you can still [get your puzzle input][1].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][2] [Mastodon][3]] this puzzle.
+At this point, you should [return to your Advent calendar][1] and try another puzzle.
 
-[1]: 13/input
-[2]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Distress+Signal%22+%2D+Day+13+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F13&related=ericwastl&hashtags=AdventOfCode
-[3]: javascript:void(0);
+If you still want to see it, you can [get your puzzle input][2].
+
+You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+
+[1]: /2022
+[2]: 13/input
+[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Distress+Signal%22+%2D+Day+13+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F13&related=ericwastl&hashtags=AdventOfCode
+[4]: javascript:void(0);
 
