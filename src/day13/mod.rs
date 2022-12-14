@@ -1,4 +1,3 @@
-use arrayvec::ArrayVec;
 use log::debug;
 use serde_json::Value;
 use std::cmp::Ordering;
@@ -8,8 +7,14 @@ use aoc_lib::parse;
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut part1 = 0;
     let mut index: u64 = 0;
-    let mut all_packets: ArrayVec<Value, 512> = ArrayVec::new();
     let mut input = input;
+
+    let divider1: Value = serde_json::from_slice(b"[[2]]").unwrap();
+    let divider2: Value = serde_json::from_slice(b"[[6]]").unwrap();
+
+    let mut smaller_count_div1: u64 = 0;
+    let mut smaller_count_div2: u64 = 0;
+
     while !input.is_empty() {
         index += 1;
         debug!("=== {index} ===");
@@ -36,28 +41,25 @@ pub fn solve(input: &[u8]) -> (String, String) {
             part1 += index;
         }
 
-        all_packets.push(lhs);
-        all_packets.push(rhs);
+        if compare_values(&lhs, &divider1) == Ordering::Less {
+            smaller_count_div1 += 1;
+        }
+        if compare_values(&rhs, &divider1) == Ordering::Less {
+            smaller_count_div1 += 1;
+        }
+        if compare_values(&lhs, &divider2) == Ordering::Less {
+            smaller_count_div2 += 1;
+        }
+        if compare_values(&rhs, &divider2) == Ordering::Less {
+            smaller_count_div2 += 1;
+        }
 
         input = &input[pos_eol..];
         input = parse::seek_next_line(input);
         input = parse::seek_next_line(input);
     }
 
-    let divider1: Value = serde_json::from_slice(b"[[2]]").unwrap();
-    let divider2: Value = serde_json::from_slice(b"[[6]]").unwrap();
-
-    all_packets.push(divider1.clone());
-    all_packets.push(divider2.clone());
-    all_packets.sort_unstable_by(|a, b| compare_values(a, b));
-
-    let mut part2: usize = 1;
-    for (i, packet) in all_packets.iter().enumerate() {
-        if *packet == divider1 || *packet == divider2 {
-            part2 *= i + 1;
-        }
-    }
-
+    let part2 = (smaller_count_div1 + 1) * (smaller_count_div2 + 2);
     (part1.to_string(), part2.to_string())
 }
 
@@ -95,7 +97,7 @@ fn compare_values_helper(lhs: &Value, rhs: &Value, level: usize) -> Ordering {
                 }
             }
             // check who ran out of items first
-            return xs.len().cmp(&ys.len());
+            xs.len().cmp(&ys.len())
         }
         (Value::Number(a), Value::Array(_)) => {
             let alist = Value::Array(vec![Value::Number(a.clone())]);
@@ -103,7 +105,7 @@ fn compare_values_helper(lhs: &Value, rhs: &Value, level: usize) -> Ordering {
                 "Mixed types; convert left to {:?} and retry comparison",
                 alist
             );
-            return compare_values_helper(&alist, rhs, level + 1);
+            compare_values_helper(&alist, rhs, level + 1)
         }
         (Value::Array(_), Value::Number(b)) => {
             let blist = Value::Array(vec![Value::Number(b.clone())]);
@@ -111,7 +113,7 @@ fn compare_values_helper(lhs: &Value, rhs: &Value, level: usize) -> Ordering {
                 "Mixed types; convert right to {:?} and retry comparison",
                 blist
             );
-            return compare_values_helper(lhs, &blist, level + 1);
+            compare_values_helper(lhs, &blist, level + 1)
         }
         _ => {
             panic!("unsupported JSON value");
