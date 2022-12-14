@@ -137,8 +137,6 @@ Using your scan, simulate the falling sand. *How many units of sand come to rest
 
 Your puzzle answer was `832`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 You realize you misread the scan. There isn't an endless void at the bottom of the scan - there's floor, and you're standing on it!
@@ -181,14 +179,19 @@ looks like this after `*93*` units of sand come to rest:
 
 Using your scan, simulate the falling sand until the source of the sand becomes blocked. *How many units of sand come to rest?*
 
-Answer:
+Your puzzle answer was `27601`.
 
-Although it hasn't changed, you can still [get your puzzle input][2].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+At this point, you should [return to your Advent calendar][2] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][3].
+
+You can also [Shareon [Twitter][4] [Mastodon][5]] this puzzle.
 
 [1]: /2018/day/17
-[2]: 14/input
-[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Regolith+Reservoir%22+%2D+Day+14+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F14&related=ericwastl&hashtags=AdventOfCode
-[4]: javascript:void(0);
+[2]: /2022
+[3]: 14/input
+[4]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Regolith+Reservoir%22+%2D+Day+14+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F14&related=ericwastl&hashtags=AdventOfCode
+[5]: javascript:void(0);
 

@@ -6,8 +6,6 @@ use log::{debug, trace};
 use rock::{Point, Rock};
 
 pub fn solve(input: &[u8]) -> (String, String) {
-    let mut part1 = 0;
-
     let mut input = input;
     let mut rocks = RocksCollection::new();
     while !input.is_empty() {
@@ -29,23 +27,43 @@ pub fn solve(input: &[u8]) -> (String, String) {
         input = parse::seek_next_line(input);
     }
 
-    let mut sand_points: AHashSet<Point> = AHashSet::with_capacity(1024);
-    for i in 0..u64::MAX {
-        let sand = Point { x: 500, y: 0 };
-        match simulate(sand, &rocks, &sand_points) {
-            Some(dest) => {
-                debug!(">> simulation finished with dest {:?}", dest);
-                sand_points.insert(dest);
-                debug!("sand_points: {:?}", sand_points);
-            }
-            None => {
-                part1 = i;
-                break;
+    let part1;
+    {
+        let mut sand_points: AHashSet<Point> = AHashSet::with_capacity(1024);
+        loop {
+            let sand = Point { x: 500, y: 0 };
+            match simulate(sand, &rocks, &sand_points, false) {
+                Some(dest) => {
+                    debug!(">> simulation finished with dest {:?}", dest);
+                    sand_points.insert(dest);
+                }
+                None => {
+                    break;
+                }
             }
         }
+        part1 = sand_points.len();
     }
 
-    let part2: i64 = 42;
+    let part2;
+    {
+        let mut sand_points: AHashSet<Point> = AHashSet::with_capacity(1024);
+        loop {
+            let sand = Point { x: 500, y: 0 };
+            match simulate(sand, &rocks, &sand_points, true) {
+                Some(dest) => {
+                    debug!(">> simulation finished with dest {:?}", dest);
+                    if !sand_points.insert(dest) {
+                        break;
+                    }
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+        part2 = sand_points.len();
+    }
 
     (part1.to_string(), part2.to_string())
 }
@@ -86,26 +104,30 @@ fn simulate(
     mut sand: Point,
     rocks: &RocksCollection,
     sand_points: &AHashSet<Point>,
+    check_floor: bool,
 ) -> Option<Point> {
     debug!("simulating {:?}, y_max: {:?}", sand, rocks.y_max);
+    let floor = rocks.y_max + 2;
     loop {
+        let sand_old = sand;
         let down = Point {
             x: sand.x,
             y: sand.y + 1,
         };
+        let down_left = Point {
+            x: down.x - 1,
+            y: down.y,
+        };
+        let down_right = Point {
+            x: down.x + 1,
+            y: down.y,
+        };
+
         if sand_points.contains(&down) || rocks.contains(&down) {
             // the unit of sand attempts to instead move diagonally *one step down and to the left*
-            let down_left = Point {
-                x: down.x - 1,
-                y: down.y,
-            };
             if sand_points.contains(&down_left) || rocks.contains(&down_left) {
                 // If that tile is blocked, the unit of sand attempts to instead move diagonally
                 // *one step down and to the right*
-                let down_right = Point {
-                    x: down.x + 1,
-                    y: down.y,
-                };
                 if sand_points.contains(&down_right) || rocks.contains(&down_right) {
                     //If all three possible destinations are blocked, the unit of sand *comes to
                     //rest* and no longer moves
@@ -119,12 +141,16 @@ fn simulate(
         } else {
             sand = down;
         }
-        if sand.y > rocks.y_max {
+        if !check_floor && sand.y > rocks.y_max {
             debug!(
                 "sand reaches out of bounds: {} > {} (y_max)",
                 sand.y, rocks.y_max
             );
             return None;
+        }
+        if check_floor && sand.y == floor {
+            debug!("sand hits floor {:?}", sand);
+            return Some(sand_old);
         }
     }
 }
@@ -135,27 +161,21 @@ mod tests {
 
     const DAY: i32 = 14;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
-    fn part1_example() {
-        init();
-
+    fn example() {
         let input = b"498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9
 ";
 
         let solution = solve(input);
-        assert_eq!("24", solution.0);
+        assert_eq!("24", solution.0, "part 1");
+        assert_eq!("93", solution.1, "part 2");
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("832", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!("27601", answer.1);
     }
 }
