@@ -1,4 +1,4 @@
-use aoc_lib::{interval::Interval, parse};
+use aoc_lib::{interval::ClosedInterval, parse};
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut part1: i32 = 0;
@@ -7,16 +7,16 @@ pub fn solve(input: &[u8]) -> (String, String) {
     while !input.is_empty() {
         let (rest, a1) = parse::integer(input, false).unwrap();
         let (rest, b1) = parse::integer(&rest[1..], false).unwrap();
-        let int1 = Interval::new(a1, b1);
+        let int1 = ClosedInterval::new(a1, b1);
 
         let (rest, a2) = parse::integer(&rest[1..], false).unwrap();
         let (rest, b2) = parse::integer(&rest[1..], false).unwrap();
-        let int2 = Interval::new(a2, b2);
+        let int2 = ClosedInterval::new(a2, b2);
 
         if int1.contains(&int2) || int2.contains(&int1) {
             part1 += 1;
         }
-        if int1.overlaps(&int2) || int2.overlaps(&int1) {
+        if !int1.disjoint(&int2) {
             part2 += 1;
         }
 
