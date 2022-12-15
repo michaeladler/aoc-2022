@@ -113,8 +113,6 @@ Consult the report from the sensors you just deployed. *In the row where `y=2000
 
 Your puzzle answer was `5166077`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 Your handheld device indicates that the distress signal is coming from a beacon nearby. The distress beacon is not detected by any sensor, but the distress beacon must have `x` and `y`
@@ -127,15 +125,20 @@ have a beacon: `x=14, y=11`. The tuning frequency for this distress beacon is `*
 
 Find the only possible position for the distress beacon. *What is its tuning frequency?*
 
-Answer:
+Your puzzle answer was `13071206703981`.
 
-Although it hasn't changed, you can still [get your puzzle input][2].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+At this point, you should [return to your Advent calendar][2] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][3].
+
+You can also [Shareon [Twitter][4] [Mastodon][5]] this puzzle.
 
 [1]: https://en.wikipedia.org/wiki/Taxicab_geometry
-[2]: 15/input
-[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Beacon+Exclusion+Zone%22+%2D+Day+15+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F15&
-related=ericwastl&hashtags=AdventOfCode
-[4]: javascript:void(0);
+[2]: /2022
+[3]: 15/input
+[4]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Beacon+Exclusion+Zone%22+%2D+Day+15+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F15&related=eric
+wastl&hashtags=AdventOfCode
+[5]: javascript:void(0);
 

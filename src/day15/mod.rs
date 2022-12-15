@@ -1,6 +1,6 @@
 use ahash::AHashSet;
 use arrayvec::ArrayVec;
-use log::debug;
+use log::{debug, trace};
 
 use aoc_lib::{
     interval::{merge_intervals, ClosedInterval},
@@ -16,9 +16,8 @@ struct Beacon(Point2D);
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let pairings = parse_input(input);
-    let part1 = count_illegal_beacon_locs(&pairings, 2000000);
-    let part2: i64 = 42;
-
+    let part1 = count_illegal_beacon_locs(&pairings, 2000000).0;
+    let part2 = tuning_frequency(&pairings, 4000000);
     (part1.to_string(), part2.to_string())
 }
 
@@ -33,7 +32,6 @@ fn parse_input(input: &[u8]) -> ArrayVec<(Sensor, Beacon), 64> {
         let (rest, x) = parse::integer(rest, true).unwrap();
         let (rest, y) = parse::integer(rest, true).unwrap();
         let beacon = Beacon(Point2D::new(x, y));
-        debug!("{:?}: closest {:?}", sensor, beacon);
         pairings.push((sensor, beacon));
 
         input = parse::seek_next_line(rest);
@@ -41,7 +39,10 @@ fn parse_input(input: &[u8]) -> ArrayVec<(Sensor, Beacon), 64> {
     pairings
 }
 
-fn count_illegal_beacon_locs(pairings: &[(Sensor, Beacon)], y_dest: i64) -> usize {
+fn count_illegal_beacon_locs(
+    pairings: &[(Sensor, Beacon)],
+    y_dest: i64,
+) -> (usize, Vec<ClosedInterval>) {
     let mut intervals: Vec<ClosedInterval> = Vec::with_capacity(256);
     let mut beacons_in_row: AHashSet<Beacon> = AHashSet::new();
     for (sensor, beacon) in pairings {
@@ -55,24 +56,43 @@ fn count_illegal_beacon_locs(pairings: &[(Sensor, Beacon)], y_dest: i64) -> usiz
             continue;
         }
 
-        debug!("{:?}, {:?}, {dy} => dx: {dx}", sensor, beacon);
         debug_assert!(dx >= 0);
         let interval = ClosedInterval::new(sensor.0.x - dx, sensor.0.x + dx);
         intervals.push(interval);
     }
-    debug!(
+    trace!(
         "beacons_in_row: {}, intervals: {:?}",
         beacons_in_row.len(),
         intervals
     );
 
-    // merge intervals which overlap
     let merged = merge_intervals(&intervals);
-    debug!("merged: {:?}", merged);
+    trace!("merged: {:?}", merged);
 
     let sum: usize = merged.iter().map(|x| x.len()).sum();
+    (sum - beacons_in_row.len(), merged)
+}
 
-    sum - beacons_in_row.len()
+fn tuning_frequency(pairings: &[(Sensor, Beacon)], max: usize) -> i64 {
+    let horizontal = ClosedInterval::new(0, max as i64);
+    for y in 0..=max {
+        let non_beacons = count_illegal_beacon_locs(pairings, y as i64).1;
+        // find gap
+        for (lhs, rhs) in non_beacons.iter().zip(non_beacons.iter().skip(1)) {
+            if let (Some(lhs), Some(rhs)) = (lhs.intersect(&horizontal), rhs.intersect(&horizontal))
+            {
+                debug!("y={y}, lhs {:?}, rhs: {:?}", lhs, rhs);
+                if lhs.disjoint(&rhs) {
+                    let gap_width = rhs.a - lhs.b;
+                    debug!("found gap of width {gap_width}");
+                    if gap_width == 2 {
+                        return (y as i64) + 4000000 * (lhs.b + 1);
+                    }
+                }
+            }
+        }
+    }
+    0
 }
 
 #[cfg(test)]
@@ -81,15 +101,7 @@ mod tests {
 
     const DAY: i32 = 15;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
-    #[test]
-    fn part1_example() {
-        init();
-
-        let input = b"Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+    const EXAMPLE: &[u8] = b"Sensor at x=2, y=18: closest beacon is at x=-2, y=15
 Sensor at x=9, y=16: closest beacon is at x=10, y=16
 Sensor at x=13, y=2: closest beacon is at x=15, y=3
 Sensor at x=12, y=14: closest beacon is at x=10, y=16
@@ -105,16 +117,22 @@ Sensor at x=14, y=3: closest beacon is at x=15, y=3
 Sensor at x=20, y=1: closest beacon is at x=15, y=3
 ";
 
-        let pairings = parse_input(input);
-        let count = count_illegal_beacon_locs(&pairings, 10);
-        assert_eq!(26, count);
+    #[test]
+    fn part1_example() {
+        let pairings = parse_input(EXAMPLE);
+        assert_eq!(26, count_illegal_beacon_locs(&pairings, 10).0);
+    }
+
+    #[test]
+    fn part2_example() {
+        let pairings = parse_input(EXAMPLE);
+        assert_eq!(56000011, tuning_frequency(&pairings, 20));
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("5166077", answer.0);
-        // TODO
-        // assert_eq!("42", answer.1);
+        assert_eq!("13071206703981", answer.1);
     }
 }
