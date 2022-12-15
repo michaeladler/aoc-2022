@@ -2,7 +2,7 @@ use ahash::AHashSet;
 use arrayvec::ArrayVec;
 use log::{debug, trace};
 
-use aoc_lib::parse;
+use aoc_lib::{parse, point::Point2D};
 
 #[derive(Debug, Copy, Clone)]
 enum Direction {
@@ -12,43 +12,32 @@ enum Direction {
     U,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-struct Point {
-    x: i32,
-    y: i32,
+fn move_point(p: &mut Point2D, direction: Direction) {
+    match direction {
+        Direction::R => {
+            p.x += 1;
+        }
+        Direction::L => {
+            p.x -= 1;
+        }
+        Direction::D => {
+            p.y -= 1;
+        }
+        Direction::U => {
+            p.y += 1;
+        }
+    }
 }
 
-impl Point {
-    pub fn step(&mut self, direction: Direction) {
-        match direction {
-            Direction::R => {
-                self.x += 1;
-            }
-            Direction::L => {
-                self.x -= 1;
-            }
-            Direction::D => {
-                self.y -= 1;
-            }
-            Direction::U => {
-                self.y += 1;
-            }
-        }
+fn follow_head(head: &Point2D, tail: &Point2D) -> Point2D {
+    let dx = head.x - tail.x;
+    let dy = head.y - tail.y;
+    let dist_squared = dx * dx + dy * dy;
+    if dist_squared > 2 {
+        let (delta_x, delta_y) = ((head.x - tail.x).signum(), (head.y - tail.y).signum());
+        return Point2D::new(tail.x + delta_x, tail.y + delta_y);
     }
-
-    pub fn follow_head(&self, head: Self) -> Point {
-        let dx = head.x - self.x;
-        let dy = head.y - self.y;
-        let dist_squared = dx * dx + dy * dy;
-        if dist_squared > 2 {
-            let (delta_x, delta_y) = ((head.x - self.x).signum(), (head.y - self.y).signum());
-            return Point {
-                x: self.x + delta_x,
-                y: self.y + delta_y,
-            };
-        }
-        *self
-    }
+    *tail
 }
 
 const MAX_LEN: usize = 10;
@@ -56,26 +45,25 @@ const MAX_LEN: usize = 10;
 #[derive(Debug, PartialEq, Eq)]
 struct Rope {
     // head is at pos 0, tail is last pos
-    points: ArrayVec<Point, MAX_LEN>,
+    points: ArrayVec<Point2D, MAX_LEN>,
 }
 
 impl Rope {
     pub fn new(len: usize) -> Self {
-        let mut points: ArrayVec<Point, MAX_LEN> = ArrayVec::new();
+        let mut points: ArrayVec<Point2D, MAX_LEN> = ArrayVec::new();
         for _i in 0..len {
-            points.push(Point { x: 0, y: 0 });
+            points.push(Point2D::new(0, 0));
         }
         Self { points }
     }
 
     pub fn apply(&mut self, direction: Direction) {
         trace!("points before: {:?}", self.points);
-        self.points[0].step(direction);
+        move_point(&mut self.points[0], direction);
 
         let n = self.points.len();
         for i in 0..n - 1 {
-            let (head, tail) = (self.points[i], self.points[i + 1]);
-            let new_tail = tail.follow_head(head);
+            let new_tail = follow_head(&self.points[i], &self.points[i + 1]);
             self.points[i + 1] = new_tail;
         }
         trace!("points after: {:?}", self.points);
@@ -87,8 +75,8 @@ pub fn solve(input: &[u8]) -> (String, String) {
     let mut rope2 = Rope::new(10);
 
     // points visited by tail
-    let mut visited: AHashSet<Point> = AHashSet::with_capacity(6000);
-    let mut visited2: AHashSet<Point> = AHashSet::with_capacity(6000);
+    let mut visited: AHashSet<Point2D> = AHashSet::with_capacity(6000);
+    let mut visited2: AHashSet<Point2D> = AHashSet::with_capacity(6000);
 
     visited.insert(*rope.points.last().unwrap());
     visited2.insert(*rope2.points.last().unwrap());

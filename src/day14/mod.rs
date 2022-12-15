@@ -1,20 +1,20 @@
 mod rock;
 
 use ahash::AHashSet;
-use aoc_lib::parse;
+use aoc_lib::{parse, point::Point2D};
 use log::{debug, trace};
-use rock::{Point, Rock};
+use rock::Rock;
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
     let mut rocks = RocksCollection::new();
     while !input.is_empty() {
-        let mut points: Vec<Point> = Vec::new();
+        let mut points: Vec<Point2D> = Vec::new();
         loop {
             let (rest, x) = parse::positive(input, false).unwrap();
             let (rest, y) = parse::positive(&rest[1..], false).unwrap();
-            let (x, y) = (x as i32, y as i32);
-            points.push(Point { x, y });
+            let (x, y) = (x as i64, y as i64);
+            points.push(Point2D { x, y });
             if rest[0] == b'\n' {
                 trace!("{:?}", points);
                 input = rest;
@@ -29,9 +29,9 @@ pub fn solve(input: &[u8]) -> (String, String) {
 
     let part1;
     {
-        let mut sand_points: AHashSet<Point> = AHashSet::with_capacity(1024);
+        let mut sand_points: AHashSet<Point2D> = AHashSet::with_capacity(1024);
         loop {
-            let sand = Point { x: 500, y: 0 };
+            let sand = Point2D { x: 500, y: 0 };
             match simulate(sand, &rocks, &sand_points, false) {
                 Some(dest) => {
                     debug!(">> simulation finished with dest {:?}", dest);
@@ -47,9 +47,9 @@ pub fn solve(input: &[u8]) -> (String, String) {
 
     let part2;
     {
-        let mut sand_points: AHashSet<Point> = AHashSet::with_capacity(1024);
+        let mut sand_points: AHashSet<Point2D> = AHashSet::with_capacity(1024);
         loop {
-            let sand = Point { x: 500, y: 0 };
+            let sand = Point2D { x: 500, y: 0 };
             match simulate(sand, &rocks, &sand_points, true) {
                 Some(dest) => {
                     debug!(">> simulation finished with dest {:?}", dest);
@@ -71,14 +71,14 @@ pub fn solve(input: &[u8]) -> (String, String) {
 #[derive(Debug)]
 struct RocksCollection {
     rocks: Vec<Rock>,
-    y_max: i32,
+    y_max: i64,
 }
 
 impl RocksCollection {
     pub fn new() -> Self {
         RocksCollection {
             rocks: Vec::with_capacity(200),
-            y_max: i32::MIN,
+            y_max: i64::MIN,
         }
     }
 
@@ -89,7 +89,7 @@ impl RocksCollection {
         self.rocks.push(rock);
     }
 
-    pub fn contains(&self, p: &Point) -> bool {
+    pub fn contains(&self, p: &Point2D) -> bool {
         for r in &self.rocks {
             if r.contains(p) {
                 return true;
@@ -101,24 +101,24 @@ impl RocksCollection {
 
 // Let it snow... Returns destination of sand.
 fn simulate(
-    mut sand: Point,
+    mut sand: Point2D,
     rocks: &RocksCollection,
-    sand_points: &AHashSet<Point>,
+    sand_points: &AHashSet<Point2D>,
     check_floor: bool,
-) -> Option<Point> {
+) -> Option<Point2D> {
     debug!("simulating {:?}, y_max: {:?}", sand, rocks.y_max);
     let floor = rocks.y_max + 2;
     loop {
         let sand_old = sand;
-        let down = Point {
+        let down = Point2D {
             x: sand.x,
             y: sand.y + 1,
         };
-        let down_left = Point {
+        let down_left = Point2D {
             x: down.x - 1,
             y: down.y,
         };
-        let down_right = Point {
+        let down_right = Point2D {
             x: down.x + 1,
             y: down.y,
         };

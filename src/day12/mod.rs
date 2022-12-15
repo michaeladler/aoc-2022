@@ -1,3 +1,4 @@
+use aoc_lib::point::Point2D;
 use log::debug;
 use std::{collections::VecDeque, fmt};
 
@@ -11,18 +12,12 @@ const START_ELEVATION: char = 'a';
 const END: char = 'E';
 const END_ELEVATION: char = 'z';
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, PartialOrd, Ord, Hash)]
-struct Point {
-    x: i32,
-    y: i32,
-}
-
 struct Grid {
     grid: [[char; MAX_COLS]; MAX_ROWS],
     rows: usize,
     cols: usize,
-    start: Point,
-    end: Point,
+    start: Point2D,
+    end: Point2D,
 }
 
 impl Grid {
@@ -31,8 +26,8 @@ impl Grid {
             grid: [[EMPTY; MAX_COLS]; MAX_ROWS],
             rows: 0,
             cols: 0,
-            start: Point { y: 0, x: 0 },
-            end: Point { y: 0, x: 0 },
+            start: Point2D { y: 0, x: 0 },
+            end: Point2D { y: 0, x: 0 },
         }
     }
     pub fn set(&mut self, y: usize, x: usize, c: char) {
@@ -41,28 +36,28 @@ impl Grid {
         self.cols = std::cmp::max(self.cols, x + 1);
     }
 
-    pub fn edges_reversed(&self, y: usize, x: usize, neighbors: &mut Vec<Point>) {
+    pub fn edges_reversed(&self, y: usize, x: usize, neighbors: &mut Vec<Point2D>) {
         neighbors.clear();
-        let directions: [(i32, i32); 4] = [
+        let directions: [(i64, i64); 4] = [
             (0, -1), // top
             (1, 0),  // right
             (0, 1),  // bottom
             (-1, 0), // left
         ];
         let elevation = unsafe { *self.grid.get_unchecked(y).get_unchecked(x) };
-        let x = x as i32;
-        let y = y as i32;
+        let x = x as i64;
+        let y = y as i64;
         for (dx, dy) in directions {
             let new_x = x + dx;
             let new_y = y + dy;
-            if new_x >= 0 && new_y >= 0 && new_x < (self.cols as i32) && new_y < (self.rows as i32)
+            if new_x >= 0 && new_y >= 0 && new_x < (self.cols as i64) && new_y < (self.rows as i64)
             {
                 let neighbor_elevation = self.get(new_y as usize, new_x as usize);
                 // the elevation of the destination square can be *at most one higher* than the elevation of your current square
                 if neighbor_elevation >= elevation
                     || (elevation as u8) == (neighbor_elevation as u8) + 1
                 {
-                    neighbors.push(Point { x: new_x, y: new_y });
+                    neighbors.push(Point2D { x: new_x, y: new_y });
                 }
             }
         }
@@ -72,7 +67,7 @@ impl Grid {
         unsafe { *self.grid.get_unchecked(y).get_unchecked(x) }
     }
 
-    pub fn shortest_distances(&self, start: Point) -> Vec<i64> {
+    pub fn shortest_distances(&self, start: Point2D) -> Vec<i64> {
         // like dijkstra but uses VecDeque instead of PriorityQueue due to edge weight 1
         const INFINITY: i64 = i64::MAX;
         //const NO_PREV: i64 = -1;
@@ -116,7 +111,7 @@ impl Grid {
     }
 
     // Convert 2d to 1d.
-    pub fn two_dim_to_one_dim(&self, p: Point) -> usize {
+    pub fn two_dim_to_one_dim(&self, p: Point2D) -> usize {
         // the reverse is:
         // (x, y) = (offset % self.cols, offset / self.cols);
         p.y as usize * self.cols + p.x as usize
@@ -147,9 +142,9 @@ pub fn solve(input: &[u8]) -> (String, String) {
     for (y, row) in grid.grid.iter().enumerate().take(grid.rows) {
         for (x, &elevation) in row.iter().enumerate().take(grid.cols) {
             if elevation == 'a' {
-                let p = Point {
-                    x: x as i32,
-                    y: y as i32,
+                let p = Point2D {
+                    x: x as i64,
+                    y: y as i64,
                 };
                 if p != grid.start {
                     alt_starts.push(p);
@@ -184,16 +179,16 @@ fn parse_input(input: &[u8]) -> Grid {
                     break;
                 }
                 START => {
-                    grid.start = Point {
-                        y: row as i32,
-                        x: col as i32,
+                    grid.start = Point2D {
+                        y: row as i64,
+                        x: col as i64,
                     };
                     grid.set(row, col, START_ELEVATION);
                 }
                 END => {
-                    grid.end = Point {
-                        y: row as i32,
-                        x: col as i32,
+                    grid.end = Point2D {
+                        y: row as i64,
+                        x: col as i64,
                     };
                     grid.set(row, col, END_ELEVATION);
                 }

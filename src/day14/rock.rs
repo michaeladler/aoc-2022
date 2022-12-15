@@ -1,28 +1,22 @@
-use std::cmp::{max, min};
-
+use aoc_lib::point::Point2D;
 use log::trace;
+use std::cmp::{max, min};
 
 #[derive(Debug)]
 pub struct Rock {
-    points: Vec<Point>,
-    pub y_min: i32,
-    pub y_max: i32,
-    pub x_min: i32,
-    pub x_max: i32,
-}
-
-#[derive(Debug, PartialEq, Eq, Copy, Clone, PartialOrd, Ord, Hash)]
-pub struct Point {
-    pub x: i32,
-    pub y: i32,
+    points: Vec<Point2D>,
+    pub y_min: i64,
+    pub y_max: i64,
+    pub x_min: i64,
+    pub x_max: i64,
 }
 
 impl Rock {
-    pub fn new(points: Vec<Point>) -> Self {
-        let mut x_min = i32::MAX;
-        let mut x_max = i32::MIN;
-        let mut y_min = i32::MAX;
-        let mut y_max = i32::MIN;
+    pub fn new(points: Vec<Point2D>) -> Self {
+        let mut x_min = i64::MAX;
+        let mut x_max = i64::MIN;
+        let mut y_min = i64::MAX;
+        let mut y_max = i64::MIN;
         for p in &points {
             if p.x < x_min {
                 x_min = p.x;
@@ -47,7 +41,7 @@ impl Rock {
     }
 
     /// Test whether `candidate` is part of the rock structure.
-    pub fn contains(&self, candidate: &Point) -> bool {
+    pub fn contains(&self, candidate: &Point2D) -> bool {
         trace!("checking points: {:?}", self.points);
         trace!(
             "top_left=({}, {}), bottom_right({}, {})",
