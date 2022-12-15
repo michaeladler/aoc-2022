@@ -1,43 +1,17 @@
-use aoc_lib::parse;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct Interval {
-    a: i32,
-    b: i32,
-}
-
-impl Interval {
-    pub fn new(a: i32, b: i32) -> Interval {
-        debug_assert!(a <= b);
-        Interval { a, b }
-    }
-
-    pub fn contains(&self, other: &Interval) -> bool {
-        self.a <= other.a && other.b <= self.b
-    }
-
-    pub fn overlaps(&self, other: &Interval) -> bool {
-        let (left, right) = if self <= other {
-            (self, other)
-        } else {
-            (other, self)
-        };
-        left.b >= right.a
-    }
-}
+use aoc_lib::{interval::Interval, parse};
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut part1: i32 = 0;
     let mut part2: i32 = 0;
     let mut input = input;
     while !input.is_empty() {
-        let (rest, a1) = parse::positive(input, false).unwrap();
-        let (rest, b1) = parse::positive(&rest[1..], false).unwrap();
-        let int1 = Interval::new(a1 as i32, b1 as i32);
+        let (rest, a1) = parse::integer(input, false).unwrap();
+        let (rest, b1) = parse::integer(&rest[1..], false).unwrap();
+        let int1 = Interval::new(a1, b1);
 
-        let (rest, a2) = parse::positive(&rest[1..], false).unwrap();
-        let (rest, b2) = parse::positive(&rest[1..], false).unwrap();
-        let int2 = Interval::new(a2 as i32, b2 as i32);
+        let (rest, a2) = parse::integer(&rest[1..], false).unwrap();
+        let (rest, b2) = parse::integer(&rest[1..], false).unwrap();
+        let int2 = Interval::new(a2, b2);
 
         if int1.contains(&int2) || int2.contains(&int1) {
             part1 += 1;
