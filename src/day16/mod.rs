@@ -163,7 +163,24 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
     }
 
-    // part1: dfs
+    let part1 = solve_part1(
+        &graph,
+        &bitset_index_to_valve,
+        &valve_to_bitset_index,
+        &flow_rates,
+    );
+    let part2: i64 = 42;
+
+    (part1.to_string(), part2.to_string())
+}
+
+fn solve_part1(
+    graph: &Graph,
+    bitset_index_to_valve: &[Option<usize>],
+    valve_to_bitset_index: &[Option<usize>],
+    flow_rates: &[i32],
+) -> i32 {
+    // part1: dfs, very slow
     let mut stack: Vec<State> = Vec::with_capacity(1024);
     let mut seen: AHashSet<State> = AHashSet::with_capacity(1024);
     let start = State {
@@ -234,11 +251,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
             }
         }
     }
-
-    let part1 = highest_pressure;
-    let part2: i64 = 42;
-
-    (part1.to_string(), part2.to_string())
+    highest_pressure
 }
 
 #[cfg(test)]
