@@ -2,6 +2,7 @@ use ahash::{AHashMap, AHashSet};
 use log::debug;
 use std::fmt::Display;
 
+use aoc_lib::graph::AdjacencyMatrix;
 use aoc_lib::{bitset::Bitset, parse};
 
 const MAX_VALVE: usize = 26 * 26;
@@ -21,59 +22,6 @@ impl Valve {
 impl Display for Valve {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}{}", self.0 .0, self.0 .1)
-    }
-}
-
-#[derive(Debug)]
-struct AdjacencyMatrix<const N: usize> {
-    weights: [[i32; N]; N],
-}
-
-const INF: i32 = i32::MAX;
-
-// TODO: move this to my aoc-lib
-impl<const N: usize> AdjacencyMatrix<N> {
-    pub fn new() -> Self {
-        AdjacencyMatrix {
-            weights: [[INF; N]; N],
-        }
-    }
-
-    pub fn add_edge_undirected(&mut self, from: usize, to: usize, weight: i32) {
-        self.weights[from][to] = weight;
-        self.weights[to][from] = weight;
-    }
-
-    ///The Floyd Warshall Algorithm is for solving all pairs of shortest-path problems. The problem
-    ///is to find the shortest distances between every pair of vertices in a given edge-weighted
-    ///directed graph.
-    pub fn floyd_warshall(&self) -> [[i32; N]; N] {
-        let mut dist = self.weights.clone();
-        /* Add all vertices one by one to the set of intermediate vertices.
-        ---> Before start of an iteration, we have shortest distances between all pairs of vertices
-        such that the shortest distances consider only the vertices in set {0, 1, 2, .. k-1} as
-        intermediate vertices.
-        ----> After the end of an iteration, vertex no. k is added to the set of intermediate
-        vertices and the set becomes {0, 1, 2, .. k}
-        */
-        for k in 0..N {
-            // Pick all vertices as source one by one
-            for i in 0..N {
-                // Pick all vertices as destination for the above picked source
-                for j in 0..N {
-                    // If vertex k is on the shortest path from i to j,
-                    // then update the value of dist[i][j]
-                    let d_kj = unsafe { *dist.get_unchecked(k).get_unchecked(j) };
-                    let d_ik = unsafe { *dist.get_unchecked(i).get_unchecked(k) };
-                    let d_ij = unsafe { *dist.get_unchecked(i).get_unchecked(j) };
-                    if d_kj != INF && d_ik != INF && d_ij > d_ik + d_kj {
-                        let entry = unsafe { dist.get_unchecked_mut(i).get_unchecked_mut(j) };
-                        *entry = d_ik + d_kj;
-                    }
-                }
-            }
-        }
-        dist
     }
 }
 
