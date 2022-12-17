@@ -1,36 +1,20 @@
-use ahash::AHashSet;
+use ahash::{AHashMap, AHashSet};
 use log::debug;
 use std::fmt::Display;
 
 use aoc_lib::{bitset::Bitset, parse};
 
-const MAX_VERTICES: usize = 1 + 26 * 26;
-const MAX_EDGES: usize = 8;
+const MAX_VALVE: usize = 26 * 26;
 
-// our graph is one-based
-const NO_EDGE: usize = 0;
-
-const NO_FLOW_RATE: i32 = i32::MIN;
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Valve((char, char));
 
 impl Valve {
-    // one based
     pub fn encode(&self) -> usize {
-        debug_assert!(self.0 .0.is_uppercase());
-        debug_assert!(self.0 .1.is_uppercase());
         let unwrapped = self.0;
         let low = (unwrapped.1 as u8 - b'A') as usize;
         let high = (unwrapped.0 as u8 - b'A') as usize * 26;
-        1 + low + high
-    }
-
-    pub fn decode(x: usize) -> Self {
-        let x = x - 1;
-        let high = b'A' + (x / 26) as u8;
-        let low = b'A' + (x % 26) as u8;
-        Valve((high as char, low as char))
+        low + high
     }
 }
 
@@ -41,75 +25,62 @@ impl Display for Valve {
 }
 
 #[derive(Debug)]
-struct Graph {
-    edges: [[usize; MAX_EDGES]; MAX_VERTICES],
+struct AdjacencyMatrix<const N: usize> {
+    weights: [[i32; N]; N],
 }
 
-impl Graph {
+const INF: i32 = i32::MAX;
+
+// TODO: move this to my aoc-lib
+impl<const N: usize> AdjacencyMatrix<N> {
     pub fn new() -> Self {
-        Graph {
-            edges: [[NO_EDGE; MAX_EDGES]; MAX_VERTICES],
+        AdjacencyMatrix {
+            weights: [[INF; N]; N],
         }
     }
 
-    pub fn add_edge(&mut self, from: &Valve, to: &Valve) {
-        let edges = self.edges.get_mut(from.encode()).unwrap();
-        for edge in edges.iter_mut() {
-            if *edge == NO_EDGE {
-                *edge = to.encode();
-                return;
-            }
-        }
-        panic!("could not add edge");
+    pub fn add_edge_undirected(&mut self, from: usize, to: usize, weight: i32) {
+        self.weights[from][to] = weight;
+        self.weights[to][from] = weight;
     }
 
-    pub fn edges(&self, vertex: usize) -> &[usize] {
-        debug_assert!(vertex > 0);
-        &self.edges[vertex]
-    }
-
-    pub fn degree(&self, vertex: usize) -> usize {
-        debug_assert!(vertex > 0);
-        let mut deg: usize = 0;
-        for edge in self.edges[vertex] {
-            if edge == NO_EDGE {
-                return deg;
-            }
-            deg += 1;
-        }
-        deg
-    }
-}
-
-impl Display for Graph {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Graph:")?;
-        for (i, edges) in self
-            .edges
-            .iter()
-            .enumerate()
-            .skip(1)
-            .filter(|(i, _)| self.degree(*i) > 0)
-        {
-            let from = Valve::decode(i);
-            write!(f, "{}{}: ", from.0 .0, from.0 .1)?;
-            for &index in edges {
-                if index == NO_EDGE {
-                    break;
+    ///The Floyd Warshall Algorithm is for solving all pairs of shortest-path problems. The problem
+    ///is to find the shortest distances between every pair of vertices in a given edge-weighted
+    ///directed graph.
+    pub fn floyd_warshall(&self) -> [[i32; N]; N] {
+        let mut dist = self.weights.clone();
+        /* Add all vertices one by one to the set of intermediate vertices.
+        ---> Before start of an iteration, we have shortest distances between all pairs of vertices
+        such that the shortest distances consider only the vertices in set {0, 1, 2, .. k-1} as
+        intermediate vertices.
+        ----> After the end of an iteration, vertex no. k is added to the set of intermediate
+        vertices and the set becomes {0, 1, 2, .. k}
+        */
+        for k in 0..N {
+            // Pick all vertices as source one by one
+            for i in 0..N {
+                // Pick all vertices as destination for the above picked source
+                for j in 0..N {
+                    // If vertex k is on the shortest path from i to j,
+                    // then update the value of dist[i][j]
+                    let d_kj = unsafe { *dist.get_unchecked(k).get_unchecked(j) };
+                    let d_ik = unsafe { *dist.get_unchecked(i).get_unchecked(k) };
+                    let d_ij = unsafe { *dist.get_unchecked(i).get_unchecked(j) };
+                    if d_kj != INF && d_ik != INF && d_ij > d_ik + d_kj {
+                        let entry = unsafe { dist.get_unchecked_mut(i).get_unchecked_mut(j) };
+                        *entry = d_ik + d_kj;
+                    }
                 }
-                let to = Valve::decode(index);
-                write!(f, "{}{} ", to.0 .0, to.0 .1)?;
             }
-            writeln!(f)?;
         }
-        Ok(())
+        dist
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct State {
     /// the valve where we are right now
-    valve: u16,
+    valve: Valve,
     /// The currently open valves
     open_valves: Bitset,
     /// Current pressure
@@ -120,14 +91,16 @@ struct State {
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
-    let mut flow_rates: [i32; MAX_VERTICES] = [NO_FLOW_RATE; MAX_VERTICES];
+    let mut flow_rates: AHashMap<Valve, i32> = AHashMap::with_capacity(16);
     // one-based graph; graph[1] gives the edges of AA
-    let mut graph = Graph::new();
+    let mut graph: AdjacencyMatrix<MAX_VALVE> = AdjacencyMatrix::new();
 
     while !input.is_empty() {
         let valve = Valve((input[6] as char, input[7] as char));
         let (rest, rate) = parse::positive(&input[23..], false).unwrap();
-        flow_rates[valve.encode()] = rate as i32;
+        if rate > 0 {
+            flow_rates.insert(valve, rate as i32);
+        }
 
         let first_upper = rest
             .iter()
@@ -138,7 +111,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
         input = &rest[first_upper..];
         while input[0] != b'\n' {
             let other = Valve((input[0] as char, input[1] as char));
-            graph.add_edge(&valve, &other);
+            graph.add_edge_undirected(valve.encode(), other.encode(), 1);
             input = &input[2..];
             if input[0] == b',' {
                 input = &input[2..];
@@ -146,45 +119,32 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
         input = parse::seek_next_line(input);
     }
-    debug!("{}", graph);
+
+    println!("calculating floyd_warshall");
+    let dist = graph.floyd_warshall();
+    println!("finished floyd_warshall");
 
     // enumerate non-zero flow rates for bitset
-    let mut valve_to_bitset_index: [Option<usize>; MAX_VERTICES] = [None; MAX_VERTICES];
-    let mut bitset_index_to_valve: [Option<usize>; MAX_VERTICES] = [None; MAX_VERTICES];
-    {
-        let mut counter: usize = 0;
-        for (i, &rate) in flow_rates.iter().enumerate().skip(1) {
-            if rate > 0 {
-                debug!("{} (offset {}): {rate}", Valve::decode(i), i);
-                valve_to_bitset_index[i] = Some(counter);
-                bitset_index_to_valve[counter] = Some(i);
-                counter += 1;
-            }
-        }
+    let mut valve_to_bitset_index: AHashMap<Valve, usize> = AHashMap::with_capacity(16);
+    for (i, &valve) in flow_rates.keys().enumerate() {
+        valve_to_bitset_index.insert(valve, i);
     }
 
-    let part1 = solve_part1(
-        &graph,
-        &bitset_index_to_valve,
-        &valve_to_bitset_index,
-        &flow_rates,
-    );
+    let part1 = solve_part1(&dist, &valve_to_bitset_index, &flow_rates);
     let part2: i64 = 42;
 
     (part1.to_string(), part2.to_string())
 }
 
 fn solve_part1(
-    graph: &Graph,
-    bitset_index_to_valve: &[Option<usize>],
-    valve_to_bitset_index: &[Option<usize>],
-    flow_rates: &[i32],
+    dist: &[[i32; MAX_VALVE]],
+    valve_to_bitset_index: &AHashMap<Valve, usize>,
+    flow_rates: &AHashMap<Valve, i32>,
 ) -> i32 {
-    // part1: dfs, very slow
     let mut stack: Vec<State> = Vec::with_capacity(1024);
     let mut seen: AHashSet<State> = AHashSet::with_capacity(1024);
     let start = State {
-        valve: Valve(('A', 'A')).encode() as u16,
+        valve: Valve(('A', 'A')),
         open_valves: Bitset::new(),
         pressure: 0,
         minutes_remaining: 30,
@@ -200,54 +160,36 @@ fn solve_part1(
             state.pressure,
             stack.len()
         );
-        debug!("Your position: {}", Valve::decode(state.valve as usize));
-        for idx in state.open_valves.iter() {
-            if let Some(valve_idx) = bitset_index_to_valve[idx as usize] {
-                let valve = Valve::decode(valve_idx);
-                debug!(
-                    "Valve {valve} is open, releasing {} pressure",
-                    flow_rates[valve_idx]
-                );
-            }
+        debug!(
+            "Your position: {}, pressure: {}",
+            state.valve, state.pressure
+        );
+        // see if we have a new best solution
+        if state.pressure > highest_pressure {
+            highest_pressure = state.pressure;
+            debug!("Found new highest_pressure {highest_pressure}");
         }
 
-        if state.minutes_remaining == 0 {
-            debug!("No minutes remaining");
-            if state.pressure > highest_pressure {
-                highest_pressure = state.pressure;
-                debug!("Found new highest_pressure {highest_pressure}");
-            }
-            continue;
-        }
-
-        // opening a valve is optional, so we need to consider both possibilities
-        if let Some(bitset_idx) = valve_to_bitset_index[state.valve as usize] {
-            if !state.open_valves.is_set(bitset_idx) {
-                debug!("You open valve {}", Valve::decode(state.valve as usize));
-                let mut new_state = state.clone();
-                new_state.minutes_remaining -= 1;
-                new_state.open_valves.set(bitset_idx);
-                new_state.pressure +=
-                    new_state.minutes_remaining * flow_rates[state.valve as usize];
-                if !seen.contains(&new_state) {
-                    seen.insert(new_state.clone());
-                    stack.push(new_state);
+        // instead of visiting direct neighbors, we just go directly to valves with flow rate
+        // > 0 and which haven't been opened yet; this is much, much faster.
+        for (&dest, &idx) in valve_to_bitset_index {
+            if !state.open_valves.is_set(idx) {
+                let minutes = dist[state.valve.encode()][dest.encode()] + 1;
+                let rest = state.minutes_remaining - minutes;
+                if rest >= 0 {
+                    let mut new_state = state.clone();
+                    new_state.valve = dest;
+                    new_state.minutes_remaining = rest;
+                    new_state.open_valves.set(idx);
+                    let rate = flow_rates.get(&dest).unwrap();
+                    let pressure = new_state.minutes_remaining * rate;
+                    new_state.pressure += pressure;
+                    if !seen.contains(&new_state) {
+                        debug!("You move to valve {} and open it, which takes {minutes} minutes and adds {}*{rate} = {pressure} pressure", new_state.valve, new_state.minutes_remaining);
+                        seen.insert(new_state.clone());
+                        stack.push(new_state);
+                    }
                 }
-            }
-        }
-
-        for &neighbor_valve in graph
-            .edges(state.valve as usize)
-            .iter()
-            .filter(|&&e| e != NO_EDGE)
-        {
-            let mut new_state = state.clone();
-            new_state.valve = neighbor_valve as u16;
-            new_state.minutes_remaining -= 1;
-            if !seen.contains(&new_state) {
-                debug!("You move to valve {}", Valve::decode(neighbor_valve));
-                seen.insert(new_state.clone());
-                stack.push(new_state.clone());
             }
         }
     }
@@ -262,14 +204,6 @@ mod tests {
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
-    }
-
-    #[test]
-    fn test_encode_decode() {
-        assert_eq!(Valve(('A', 'A')), Valve::decode(Valve(('A', 'A')).encode()));
-        assert_eq!(Valve(('A', 'Z')), Valve::decode(Valve(('A', 'Z')).encode()));
-        assert_eq!(Valve(('S', 'T')), Valve::decode(Valve(('S', 'T')).encode()));
-        assert_eq!(Valve(('Z', 'Z')), Valve::decode(Valve(('Z', 'Z')).encode()));
     }
 
     #[test]
@@ -293,6 +227,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II
     }
 
     #[test]
+    #[ignore]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("1944", answer.0);
