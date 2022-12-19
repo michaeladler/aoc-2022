@@ -1,4 +1,4 @@
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 use log::debug;
 use std::fmt::Display;
 
@@ -23,18 +23,6 @@ impl Display for Valve {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}{}", self.0 .0, self.0 .1)
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-struct State {
-    /// the valve where we are right now
-    valve: Valve,
-    /// The currently open valves
-    open_valves: Bitset,
-    /// Current pressure
-    pressure: i32,
-    /// How much time is left
-    minutes_remaining: i32,
 }
 
 pub fn solve(input: &[u8]) -> (String, String) {
@@ -68,9 +56,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
         input = parse::seek_next_line(input);
     }
 
-    println!("calculating floyd_warshall");
     let dist = graph.floyd_warshall();
-    println!("finished floyd_warshall");
 
     // enumerate non-zero flow rates for bitset
     let mut valve_to_bitset_index: AHashMap<Valve, usize> = AHashMap::with_capacity(16);
@@ -78,70 +64,106 @@ pub fn solve(input: &[u8]) -> (String, String) {
         valve_to_bitset_index.insert(valve, i);
     }
 
-    let part1 = solve_part1(&dist, &valve_to_bitset_index, &flow_rates);
-    let part2: i64 = 42;
+    let facts = Facts {
+        dist,
+        valve_to_bitset_index,
+        flow_rates,
+    };
+
+    let start = Valve(('A', 'A'));
+
+    let mut cache = AHashMap::with_capacity(1024);
+    let part1 = calc_pressure(&facts, &mut cache, start, 30, Bitset::new(), 0);
+
+    let mut cache = AHashMap::with_capacity(1024);
+    let part2 = calc_pressure(&facts, &mut cache, start, 26, Bitset::new(), 1);
 
     (part1.to_string(), part2.to_string())
 }
 
-fn solve_part1(
-    dist: &[[i32; MAX_VALVE]],
-    valve_to_bitset_index: &AHashMap<Valve, usize>,
-    flow_rates: &AHashMap<Valve, i32>,
-) -> i32 {
-    let mut stack: Vec<State> = Vec::with_capacity(1024);
-    let mut seen: AHashSet<State> = AHashSet::with_capacity(1024);
-    let start = State {
-        valve: Valve(('A', 'A')),
-        open_valves: Bitset::new(),
-        pressure: 0,
-        minutes_remaining: 30,
-    };
-    stack.push(start.clone());
-    seen.insert(start);
-    let mut highest_pressure: i32 = i32::MIN;
-    while let Some(state) = stack.pop() {
-        debug!(
-            "== Minute {} == (minutes left: {}, pressure: {}, queue size: {})",
-            30 - state.minutes_remaining,
-            state.minutes_remaining,
-            state.pressure,
-            stack.len()
-        );
-        debug!(
-            "Your position: {}, pressure: {}",
-            state.valve, state.pressure
-        );
-        // see if we have a new best solution
-        if state.pressure > highest_pressure {
-            highest_pressure = state.pressure;
-            debug!("Found new highest_pressure {highest_pressure}");
-        }
+struct Facts {
+    dist: [[i32; MAX_VALVE]; MAX_VALVE],
+    // TODO: get rid of this, substracting a constant should be enough
+    valve_to_bitset_index: AHashMap<Valve, usize>,
+    // TODO: use array
+    flow_rates: AHashMap<Valve, i32>,
+}
 
-        // instead of visiting direct neighbors, we just go directly to valves with flow rate
-        // > 0 and which haven't been opened yet; this is much, much faster.
-        for (&dest, &idx) in valve_to_bitset_index {
-            if !state.open_valves.is_set(idx) {
-                let minutes = dist[state.valve.encode()][dest.encode()] + 1;
-                let rest = state.minutes_remaining - minutes;
-                if rest >= 0 {
-                    let mut new_state = state.clone();
-                    new_state.valve = dest;
-                    new_state.minutes_remaining = rest;
-                    new_state.open_valves.set(idx);
-                    let rate = flow_rates.get(&dest).unwrap();
-                    let pressure = new_state.minutes_remaining * rate;
-                    new_state.pressure += pressure;
-                    if !seen.contains(&new_state) {
-                        debug!("You move to valve {} and open it, which takes {minutes} minutes and adds {}*{rate} = {pressure} pressure", new_state.valve, new_state.minutes_remaining);
-                        seen.insert(new_state.clone());
-                        stack.push(new_state);
-                    }
-                }
+// Dynamic programming approach
+fn calc_pressure(
+    facts: &Facts,
+    // cached solutions
+    cache: &mut AHashMap<(Valve, i32, Bitset, u16), i32>,
+    // cache these
+    start: Valve,
+    minutes_left: i32,
+    open_valves: Bitset,
+    players_remaining: u16, // 1 then 0
+) -> i32 {
+    debug!(
+        "solving: {start}, {minutes_left}, open_valves: {:?}",
+        open_valves
+    );
+
+    let mut best = 0;
+
+    // instead of visiting direct neighbors, we just go directly to valves with flow rate
+    // > 0 and which haven't been opened yet; this is much, much faster.
+    for (&dest, &idx) in facts
+        .valve_to_bitset_index
+        .iter()
+        .filter(|x| !open_valves.is_set(*x.1))
+    {
+        // it takes 1 minute to open the valve after getting there
+        let duration = facts.dist[start.encode()][dest.encode()] + 1;
+        let new_minutes_left = minutes_left - duration;
+        if new_minutes_left > 0 {
+            let rate = facts.flow_rates.get(&dest).unwrap();
+            let pressure = new_minutes_left * rate;
+            let mut new_open_valves = open_valves;
+            new_open_valves.set(idx);
+
+            let cache_key = (dest, new_minutes_left, new_open_valves, players_remaining);
+            let val = if let Some(cached_value) = cache.get(&cache_key) {
+                pressure + cached_value
+            } else {
+                let pressure_subproblem = calc_pressure(
+                    facts,
+                    cache,
+                    dest,
+                    new_minutes_left,
+                    new_open_valves,
+                    players_remaining,
+                );
+                cache.insert(cache_key, pressure_subproblem);
+                pressure + pressure_subproblem
+            };
+            if val > best {
+                best = val;
             }
         }
     }
-    highest_pressure
+
+    if players_remaining > 0 {
+        // now it is the next player's turn
+        let best_other_player = calc_pressure(
+            facts,
+            cache,
+            Valve(('A', 'A')),
+            26,
+            open_valves,
+            players_remaining - 1,
+        );
+        if best_other_player > best {
+            best = best_other_player;
+        }
+    }
+
+    debug!(
+        "{start}, {minutes_left}, {:?} has max pressure {best}",
+        open_valves
+    );
+    best
 }
 
 #[cfg(test)]
@@ -150,14 +172,8 @@ mod tests {
 
     const DAY: i32 = 16;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
-    fn part1_example() {
-        init();
-
+    fn example() {
         let input = b"Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
 Valve BB has flow rate=13; tunnels lead to valves CC, AA
 Valve CC has flow rate=2; tunnels lead to valves DD, BB
@@ -171,15 +187,22 @@ Valve JJ has flow rate=21; tunnel leads to valve II
 ";
 
         let answer = solve(input);
-        assert_eq!("1651", answer.0);
+        assert_eq!("1651", answer.0, "part 1");
+        assert_eq!(
+            "1707", answer.1,
+            "part 2 should be 1707 but was {}",
+            answer.1
+        );
     }
 
     #[test]
-    #[ignore]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
-        assert_eq!("1944", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!(
+            "1944", answer.0,
+            "part 1: should be 1944 but was {}",
+            answer.0
+        );
+        assert_eq!("2679", answer.1);
     }
 }
