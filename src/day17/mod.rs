@@ -1,7 +1,8 @@
 use arrayvec::ArrayVec;
 use log::{debug, trace};
 
-const MAX_HEIGHT: usize = 10_000;
+const MAX_ITERATIONS: usize = 4_000;
+const MAX_HEIGHT: usize = 8_000;
 const WIDTH: usize = 9;
 
 const JET_RIGHT: u8 = b'>';
@@ -113,14 +114,6 @@ impl Grid {
         let mut x: usize = 3;
 
         debug!("=== dropping {:?}", item);
-        {
-            // TODO: remove this debug block
-            let old_height = self.height;
-            self.add(y, x, item, '@');
-            self.render();
-            self.add(y, x, item, '.');
-            self.height = old_height;
-        }
 
         loop {
             trace!(">> item at y={y}, x={x}");
@@ -201,14 +194,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
         pattern = &pattern[0..pattern.len() - 1];
     }
     let mut jet = Jet { pattern, idx: 0 };
-
-    let part1 = solve_internal(&mut jet, 2022);
-    let part2: i64 = 42;
-
-    (part1.to_string(), part2.to_string())
-}
-
-fn solve_internal(jet: &mut Jet, num_iterations: usize) -> usize {
     let all_items: [Item; 5] = [
         Item::Minus,
         Item::Plus,
@@ -219,15 +204,80 @@ fn solve_internal(jet: &mut Jet, num_iterations: usize) -> usize {
 
     let mut grid = Grid::new();
     let mut counter: usize = 0;
-    loop {
+    // deltas needed for part 2
+    let mut deltas = Vec::with_capacity(8192);
+    let mut old_height = 0;
+    let mut part1 = 0;
+    'outer: loop {
         for &item in &all_items {
-            grid.simulate_item(item, jet);
+            grid.simulate_item(item, &mut jet);
             counter += 1;
-            if counter == num_iterations {
-                return grid.height;
+            if counter == 2022 {
+                part1 = grid.height;
+            }
+            let delta = grid.height - old_height;
+            deltas.push(delta);
+            old_height = grid.height;
+            if counter == MAX_ITERATIONS {
+                break 'outer;
             }
         }
     }
+
+    // part 2
+    let (start, cycle_len) = find_cycle(&deltas).unwrap();
+    debug!("detected cycle of length {cycle_len} starting at {start}",);
+    let h_before: usize = deltas[0..start].iter().sum();
+    let h_cycle: usize = deltas[start..start + cycle_len].iter().sum();
+    debug!("h_before: {h_before}, h_cycle: {h_cycle}");
+
+    let total: usize = 1_000_000_000_000 - start;
+    // how many cycles do fit in
+    let cycle_count = total / cycle_len;
+    let rem = total % cycle_len;
+    debug!("cycle_count: {cycle_count}, rem: {rem}");
+
+    let h_rem: usize = deltas[start..start + rem].iter().sum();
+
+    let part2 = h_before + h_cycle * cycle_count + h_rem;
+
+    (part1.to_string(), part2.to_string())
+}
+
+fn find_cycle(x: &[usize]) -> Option<(usize, usize)> {
+    for start in 0..x.len() / 2 {
+        if let Some(cycle_len) = find_cycle_helper(x, start) {
+            return Some((start, cycle_len));
+        }
+    }
+    None
+}
+
+/// Find cycle beginning beginning at `start`.
+fn find_cycle_helper(x: &[usize], start: usize) -> Option<usize> {
+    let x = &x[start..];
+    let n = x.len();
+    'outer: for cycle_len in 2..n / 2 {
+        let mut a1 = 0;
+        let mut b1 = cycle_len;
+        let mut a2 = cycle_len;
+        let mut b2 = 2 * cycle_len;
+        loop {
+            if b2 > n {
+                break;
+            }
+            if x[a1..b1] != x[a2..b2] {
+                debug!("cycle_len {cycle_len} invalidated: {a1}..{b1} vs {a2}..{b2}");
+                continue 'outer;
+            }
+            a1 += cycle_len;
+            b1 += cycle_len;
+            a2 += cycle_len;
+            b2 += cycle_len;
+        }
+        return Some(cycle_len);
+    }
+    None
 }
 
 #[cfg(test)]
@@ -236,24 +286,36 @@ mod tests {
 
     const DAY: i32 = 17;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example() {
-        init();
-
         let example = b">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>\n";
         let answer = solve(example);
         assert_eq!("3068", answer.0, "expected 3068 but got {}", answer.0);
+        let expected = "1514285714288";
+        let actual = answer.1;
+        assert_eq!(expected, actual, "expected {expected} but got {actual}");
+    }
+
+    #[test]
+    fn test_find_cycle() {
+        let x = vec![1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4];
+        let result = find_cycle_helper(&x, 0);
+        assert_eq!(Some(4), result);
+    }
+
+    #[test]
+    fn test_find_cycle_with_offset() {
+        let x = vec![42, 43, 44, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 45];
+        let result = find_cycle_helper(&x, 0);
+        assert_eq!(None, result);
+        let result = find_cycle_helper(&x, 3);
+        assert_eq!(Some(4), result);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("3202", answer.0);
-        // TODO
-        //assert_eq!("42", answer.1);
+        assert_eq!("1591977077352", answer.1);
     }
 }

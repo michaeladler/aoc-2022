@@ -15,6 +15,10 @@ Beautiful puzzle!
 First tricky puzzle this year. Initial (naive) solution for part 1 took ~24 seconds to compute the answer. The optimized version
 (different algorithm) runs in just ~300 ms.
 
+### Day 17
+
+Part 2 is quite tricky as well but it's a beautiful puzzle.
+
 ## Resources
 
 - https://github.com/TheAlgorithms/Rust
