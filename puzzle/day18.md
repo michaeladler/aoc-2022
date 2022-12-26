@@ -36,8 +36,6 @@ In the above example, after counting up all the sides that aren't connected to a
 
 Your puzzle answer was `4282`.
 
-The first half of this puzzle is complete! It provides one gold star: *
-
 ## --- Part Two ---
 
 Something seems off about your calculation. The cooling rate depends on exterior surface area, but your calculation also included the surface area of air pockets trapped in the lava droplet.
@@ -49,14 +47,19 @@ In the larger example above, exactly one cube of air is trapped within the lava 
 
 *What is the exterior surface area of your scanned lava droplet?*
 
-Answer:
+Your puzzle answer was `2452`.
 
-Although it hasn't changed, you can still [get your puzzle input][2].
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-You can also [Shareon [Twitter][3] [Mastodon][4]] this puzzle.
+At this point, you should [return to your Advent calendar][2] and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input][3].
+
+You can also [Shareon [Twitter][4] [Mastodon][5]] this puzzle.
 
 [1]: https://en.wikipedia.org/wiki/Obsidian
-[2]: 18/input
-[3]: https://twitter.com/intent/tweet?text=I%27ve+completed+Part+One+of+%22Boiling+Boulders%22+%2D+Day+18+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F18&related=ericwastl&hashtags=AdventOfCode
-[4]: javascript:void(0);
+[2]: /2022
+[3]: 18/input
+[4]: https://twitter.com/intent/tweet?text=I%27ve+completed+%22Boiling+Boulders%22+%2D+Day+18+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F18&related=ericwastl&hashtags=AdventOfCode
+[5]: javascript:void(0);
 
