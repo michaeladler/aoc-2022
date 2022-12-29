@@ -2,3 +2,6 @@ target
 .env
 justfile
 template
+*.log
+/input
+.aocf
