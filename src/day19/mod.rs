@@ -1,12 +1,14 @@
 use ahash::AHashSet;
-use log::{debug, info};
+use arrayvec::ArrayVec;
+use log::debug;
+use rayon::prelude::*;
 
 use aoc_lib::parse;
 use aoc_lib::search::search_haystack;
 
 #[derive(Debug)]
 struct Blueprint {
-    id: u16,
+    id: i32,
     /// Cost for robots: ore, clay, obsidian, geode
     costs: [Resource; 4],
 }
@@ -15,7 +17,7 @@ struct Blueprint {
 type Resource = [i16; 3];
 
 impl Blueprint {
-    pub fn new(id: u16) -> Self {
+    pub fn new(id: i32) -> Self {
         Self {
             id,
             costs: [Default::default(); 4],
@@ -25,28 +27,33 @@ impl Blueprint {
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut input = input;
-    let mut id: u16 = 0;
-    let mut part1: i32 = 0;
+    let mut id: i32 = 0;
+    let mut blueprints: ArrayVec<Blueprint, 30> = ArrayVec::new();
     while !input.is_empty() {
         id += 1;
-        let mut blueprint = Blueprint::new(id);
+        let mut bp = Blueprint::new(id);
         let (rest, cost) = parse_robot(input);
-        blueprint.costs[0] = cost;
+        bp.costs[0] = cost;
         let (rest, cost) = parse_robot(rest);
-        blueprint.costs[1] = cost;
+        bp.costs[1] = cost;
         let (rest, cost) = parse_robot(rest);
-        blueprint.costs[2] = cost;
+        bp.costs[2] = cost;
         let (rest, cost) = parse_robot(rest);
-        blueprint.costs[3] = cost;
-        debug!("{:?}", blueprint);
-        input = parse::seek_next_line(rest);
+        bp.costs[3] = cost;
+        blueprints.push(bp);
 
-        let opened = maximize(&blueprint, 24);
-        info!("{id}: {opened}");
-        part1 += (blueprint.id as i32) * (opened as i32);
+        input = parse::seek_next_line(rest);
     }
 
-    let part2: i64 = 42;
+    let part1: i32 = blueprints
+        .par_iter()
+        .map(|bp| bp.id * maximize(bp, 24))
+        .sum();
+
+    let part2: i32 = blueprints[0..std::cmp::min(3, blueprints.len())]
+        .par_iter()
+        .map(|bp| maximize(bp, 32))
+        .product();
 
     (part1.to_string(), part2.to_string())
 }
@@ -99,6 +106,10 @@ impl State {
         }
     }
 
+    pub fn geode_count(&self) -> i16 {
+        *self.resources.last().unwrap()
+    }
+
     /// Advance without building anything
     fn tick(&self, count: u16) -> State {
         let count = count as i16;
@@ -148,70 +159,77 @@ impl State {
             debug_assert!(*res >= 0);
         }
         result.robots[idx] += 1;
-        match idx {
-                0 => debug!(
-                    "The new ore-collecting robot is ready; you now have {} of them. (minutes_left: {})",
-                    result.robots[idx], result.minutes_left
-                ),
-                1 => debug!(
-                    "The new clay-collecting robot is ready; you now have {} of them. (minutes_left: {})",
-                    result.robots[idx], result.minutes_left
-                ),
-                2 => debug!(
-                    "The new obsidian-collecting robot is ready; you now have {} of them. (minutes_left: {})",
-                    result.robots[idx], result.minutes_left
-                ),
-                3 => debug!(
-                    "The new geode-cracking robot is ready; you now have {} of them. (state: {:?})",
-                    result.robots[idx], result
-                ),
-                _ => panic!("invalid idx"),
-            };
         Some(result)
     }
 }
 
 /// The largest number of geodes you could open in `time_left` minutes.
-fn maximize(blueprint: &Blueprint, total_minutes: i16) -> i16 {
+fn maximize(blueprint: &Blueprint, total_minutes: i16) -> i32 {
     debug!("maximize {:?}", blueprint);
     let start = State::new(total_minutes);
-    let mut geode_max: State = start.clone();
+    let mut geode_max: i16 = 0;
     // dfs
     let mut queue = Vec::with_capacity(1024);
 
     queue.push(start.clone());
-    let mut seen = AHashSet::with_capacity(1024);
+    let mut seen = AHashSet::with_capacity(8192);
     seen.insert(start);
+    let mut candidates: ArrayVec<State, 4> = ArrayVec::new();
+
+    // do not build more robots than needed to build another robot, e.g. if the most expensive
+    // robot costs 5 ore, do not build more than 5 ore robots.
+    let mut max_robots: [u16; 3] = [0; 3];
+    for cost_plan in blueprint.costs {
+        for (i, &cost) in cost_plan.iter().enumerate() {
+            if cost as u16 > max_robots[i] {
+                max_robots[i] = cost as u16;
+            }
+        }
+    }
+
     while let Some(head) = queue.pop() {
         if head.minutes_left == 0 {
-            let val = *head.resources.last().unwrap();
-            if val > *geode_max.resources.last().unwrap() {
-                debug!("found new max: {} (state: {:?})", val, head);
-                geode_max = head;
+            let val = head.geode_count();
+            if val > geode_max {
+                debug!("found new max: {}", val);
+                geode_max = val;
             }
             continue;
         }
         debug_assert!(head.minutes_left >= 0);
-        debug!(
-            "== Minute {} ==, geode_max: {}, queue: {}, seen: {}",
-            geode_max.resources.last().unwrap(),
-            total_minutes - head.minutes_left,
-            queue.len(),
-            seen.len(),
-        );
-        debug!("head: {:?}", head);
         // explore neighbors
+        candidates.clear();
         for i in 0..4 {
+            // do not build more robots than needed to build another robot, e.g. if the most expensive
+            // robot costs 5 ore, do not build more than 5 ore robots.
+            if i < max_robots.len() && head.robots[i] + 1 > max_robots[i] {
+                continue;
+            }
+
             let neighbor = head
                 .build_robot(blueprint, i)
                 .unwrap_or_else(|| head.run_till_end());
+            // is it worth pursuing neighbor?
+            // if we build neighbor and then assume we can build a geode robot every turn, can we
+            // beat the current max? if not, cut off this branch.
+            let g = neighbor.geode_count();
+            let t = neighbor.minutes_left;
+            // g + (g+1) + ... + (g+t-1) = t*g + t*(t-1)/2
+            if g + t * g + ((t * (t - 1)) / 2) < geode_max {
+                continue;
+            }
+
             if !seen.contains(&neighbor) {
-                seen.insert(neighbor.clone());
-                queue.push(neighbor);
+                candidates.push(neighbor);
             }
         }
+
+        for neighbor in candidates.iter() {
+            seen.insert(neighbor.clone());
+            queue.push(neighbor.clone());
+        }
     }
-    *geode_max.resources.last().unwrap()
+    geode_max as i32
 }
 
 #[cfg(test)]
@@ -221,34 +239,29 @@ mod tests {
     const DAY: i32 = 19;
 
     #[test]
-    fn example() {
+    fn example_1() {
         let input = b"Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
-Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
 ";
 
         let answer = solve(input);
-        assert_eq!("33", answer.0, "should be 33 but was {}", answer.0);
+        assert_eq!("9", answer.0, "should be 9 but was {}", answer.0);
+        assert_eq!("56", answer.1, "should be 56 but was {}", answer.1);
     }
 
     #[test]
     fn example_2() {
-        let input = b"Blueprint 18: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 2 ore and 17 obsidian.";
+        let input = b"Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
+";
+
         let answer = solve(input);
-        assert_eq!("1", answer.0, "should be 0 but was {}", answer.0);
+        assert_eq!("12", answer.0, "should be 12 but was {}", answer.0);
+        assert_eq!("62", answer.1, "should be 62 but was {}", answer.1);
     }
 
     #[test]
-    fn example_3() {
-        let input = b"Blueprint 28: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 8 clay. Each geode robot costs 2 ore and 8 obsidian.";
-        let answer = solve(input);
-        assert_eq!("8", answer.0, "should be 8 but was {}", answer.0);
-    }
-
-    #[test]
-    #[ignore]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
-        assert_eq!("1177", answer.0, "too low");
-        //assert_eq!("42", answer.1);
+        assert_eq!("1177", answer.0);
+        assert_eq!("62744", answer.1);
     }
 }
