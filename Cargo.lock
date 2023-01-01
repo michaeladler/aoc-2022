@@ -39,6 +39,7 @@ dependencies = [
  "aoc-lib",
  "arrayvec",
  "binary-heap-plus",
+ "cc",
  "criterion",
  "env_logger",
  "log",
