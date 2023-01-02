@@ -62,8 +62,6 @@ Mix your encrypted file exactly once. *What is the sum of the three numbers that
 
 Your puzzle answer was `7225`.
 
-The first half of this puzzle is complete! It provides one gold star: \*
-
 \--- Part Two ---
 ----------
 
@@ -115,6 +113,10 @@ The grove coordinates can still be found in the same way. Here, the 1000th numbe
 
 Apply the decryption key and mix your encrypted file ten times. *What is the sum of the three numbers that form the grove coordinates?*
 
-Answer:
+Your puzzle answer was `548634267428`.
 
-Although it hasn't changed, you can still [get your puzzle input](20/input).
+Both parts of this puzzle are complete! They provide two gold stars: \*\*
+
+At this point, you should [return to your Advent calendar](/2022) and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input](20/input).

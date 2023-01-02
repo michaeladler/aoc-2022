@@ -1,11 +1,9 @@
-// src/num.c
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "helper.h"
+int64_t mix(const int64_t items[], size_t n, size_t iterations);
 
-typedef int32_t Data;
+typedef int64_t Data;
 
 /* A node in a doubly-linked list. */
 typedef struct Node {
@@ -54,7 +52,7 @@ static void delete_node(const Node *node) {
 
 #define MAX_NODES 5000
 
-int32_t mix(const int32_t items[], size_t n) {
+int64_t mix(const int64_t items[], size_t n, size_t iterations) {
     assert(n <= MAX_NODES);
     assert(n > 0);
 
@@ -76,32 +74,34 @@ int32_t mix(const int32_t items[], size_t n) {
         node->next = &nodes[(i + 1) % n];
     }
 
-    // n-1 because we remove the element before rotating the list to avoid funny corner-cases
-    int32_t mod = n - 1;
-    for (size_t i = 0; i < n; i++) {
-        Node *current = &nodes[i];
+    for (size_t iter_counter = 0; iter_counter < iterations; iter_counter++) {
+        // n-1 because we remove the element before rotating the list to avoid funny corner-cases
+        int64_t mod = n - 1;
+        for (size_t i = 0; i < n; i++) {
+            Node *current = &nodes[i];
 
-        int32_t steps = current->data % mod;
-        if (steps == 0) {
-            continue;
-        }
-
-        delete_node(current);
-        Node *dest = current->prev;
-
-        if (steps >= 0) {
-            for (int32_t j = 0; j < steps; j++) {
-                dest = dest->next;
+            int64_t steps = current->data % mod;
+            if (steps == 0) {
+                continue;
             }
-        } else {
-            for (int32_t j = 0; j < -steps; j++) {
-                dest = dest->prev;
+
+            delete_node(current);
+            Node *dest = current->prev;
+
+            if (steps >= 0) {
+                for (int64_t j = 0; j < steps; j++) {
+                    dest = dest->next;
+                }
+            } else {
+                for (int64_t j = 0; j < -steps; j++) {
+                    dest = dest->prev;
+                }
             }
+            insert_after(dest, current);
         }
-        insert_after(dest, current);
     }
 
-    int32_t result = 0;
+    int64_t result = 0;
     {  // the grove coordinates can be found by looking at the 1000th, 2000th, and 3000th numbers after the value `0`,
         // wrapping around the list as necessary
         Node *current = zero_node;
