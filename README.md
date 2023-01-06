@@ -31,6 +31,10 @@ Part 2 is quite tricky as well but it's a beautiful puzzle.
 
 Similar to day 16, also hard. Part 2 was rather unusual for AoC but actually quite interesting.
 
+### Day 21
+
+Funniest plot twist ever! Nice puzzle.
+
 ## Resources
 
 - https://github.com/TheAlgorithms/Rust

@@ -1,5 +1,7 @@
-use ahash::AHashMap;
-use log::debug;
+use std::collections::VecDeque;
+
+use ahash::{AHashMap, AHashSet};
+use log::{debug, trace};
 use petgraph::{
     algo::toposort,
     graph::{Graph, NodeIndex},
@@ -24,15 +26,17 @@ struct BinOp {
 
 pub fn solve(input: &[u8]) -> (String, String) {
     let mut monkey_values: AHashMap<NodeIndex<u32>, i64> = AHashMap::with_capacity(2048);
-    let mut blocked: AHashMap<NodeIndex<u32>, BinOp> = AHashMap::with_capacity(1024);
+    let mut num_to_binop: AHashMap<NodeIndex<u32>, BinOp> = AHashMap::with_capacity(1024);
 
     let mut monkey_to_num: AHashMap<String, NodeIndex<u32>> = AHashMap::with_capacity(1024);
-    let mut num_to_monkey: AHashMap<NodeIndex<u32>, String> = AHashMap::with_capacity(1024);
 
     let mut root_idx: Option<NodeIndex<u32>> = None;
     let root_str = String::from("root");
 
-    let mut graph: Graph<String, usize> = Graph::new();
+    let mut humn_idx: Option<NodeIndex<u32>> = None;
+    let humn_str = String::from("humn");
+
+    let mut graph: Graph<String, ()> = Graph::new();
 
     {
         let mut input = input;
@@ -41,11 +45,12 @@ pub fn solve(input: &[u8]) -> (String, String) {
             if !monkey_to_num.contains_key(&from_str) {
                 let node = graph.add_node(from_str.clone());
                 monkey_to_num.insert(from_str.clone(), node);
-                num_to_monkey.insert(node, from_str.clone());
             }
             let from = *monkey_to_num.get(&from_str).unwrap();
             if from_str == root_str {
                 root_idx = Some(from);
+            } else if from_str == humn_str {
+                humn_idx = Some(from);
             }
 
             debug_assert!(rest[0] == b':');
@@ -53,7 +58,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
 
             let mut pos_eol: usize = 0;
             let mut operation = None;
-            //let mut operation :
             for b in rest.iter() {
                 match &b {
                     b'\n' => break,
@@ -71,7 +75,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
                     if !monkey_to_num.contains_key(&lhs) {
                         let node = graph.add_node(lhs.clone());
                         monkey_to_num.insert(lhs.clone(), node);
-                        num_to_monkey.insert(node, lhs.clone());
                     }
                     let lhs = *monkey_to_num.get(&lhs).unwrap();
 
@@ -79,7 +82,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
                     if !monkey_to_num.contains_key(&rhs) {
                         let node = graph.add_node(rhs.clone());
                         monkey_to_num.insert(rhs.clone(), node);
-                        num_to_monkey.insert(node, rhs.clone());
                     }
                     let rhs = *monkey_to_num.get(&rhs).unwrap();
 
@@ -88,7 +90,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
                         rhs,
                         operation,
                     };
-                    blocked.insert(from, binop);
+                    num_to_binop.insert(from, binop);
                 }
                 None => {
                     let x = parse::integer(rest, true).unwrap().1;
@@ -99,28 +101,32 @@ pub fn solve(input: &[u8]) -> (String, String) {
             input = parse::seek_next_line(&rest[pos_eol..]);
         }
     }
-    debug!("{:?}", monkey_values);
-    debug!("{:?}", blocked);
-    debug!("{:?}", monkey_to_num);
+    let num_to_binop = num_to_binop;
     let root_idx = root_idx.unwrap();
+    let humn_idx = humn_idx.unwrap();
+    debug!(
+        "root_binop: {:?}, humn_idx: {:?}",
+        num_to_binop.get(&root_idx).unwrap(),
+        humn_idx
+    );
 
-    for (&monkey, binop) in blocked.iter() {
+    for (&monkey, binop) in num_to_binop.iter() {
         // add edge A -> B if calculating B requires A
         // in the example pppw -> root, sjmn -> root
-        graph.add_edge(binop.lhs, monkey, 1);
-        graph.add_edge(binop.rhs, monkey, 1);
+        graph.add_edge(binop.lhs, monkey, ());
+        graph.add_edge(binop.rhs, monkey, ());
     }
 
     let result = toposort(&graph, None).unwrap();
     let mut part1 = None;
     for &monkey in result.iter() {
         if !monkey_values.contains_key(&monkey) {
-            debug!("compute: {}", num_to_monkey.get(&monkey).unwrap());
-            if let Some(binop) = blocked.remove(&monkey) {
-                debug!(
+            trace!("compute: {}", graph.node_weight(monkey).unwrap());
+            if let Some(binop) = num_to_binop.get(&monkey) {
+                trace!(
                     "using: {}, {}",
-                    num_to_monkey.get(&binop.lhs).unwrap(),
-                    num_to_monkey.get(&binop.rhs).unwrap()
+                    graph.node_weight(binop.lhs).unwrap(),
+                    graph.node_weight(binop.rhs).unwrap()
                 );
                 let lhs = monkey_values.get(&binop.lhs).unwrap();
                 let rhs = monkey_values.get(&binop.rhs).unwrap();
@@ -130,7 +136,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
                     Operation::Mul => lhs * rhs,
                     Operation::Div => lhs / rhs,
                 };
-                debug!("result: {val}");
+                trace!("result: {val}");
                 if monkey == root_idx {
                     part1 = Some(val);
                     break;
@@ -140,7 +146,92 @@ pub fn solve(input: &[u8]) -> (String, String) {
         }
     }
 
-    let part2: i64 = 42;
+    // start part2
+
+    // compute path from humn_idx to root_idx
+    let mut path = VecDeque::with_capacity(1024);
+    // seen contains all nodes which are reachable from humn_idx
+    let mut seen: AHashSet<NodeIndex> = AHashSet::with_capacity(1024);
+    {
+        // bfs
+        let mut queue: Vec<NodeIndex> = Vec::with_capacity(1024);
+        let mut parent = AHashMap::with_capacity(1024);
+        queue.push(humn_idx);
+        seen.insert(humn_idx);
+        while let Some(current) = queue.pop() {
+            if current == root_idx {
+                break;
+            }
+            for nb in graph.neighbors(current) {
+                if !seen.contains(&nb) {
+                    seen.insert(nb);
+                    parent.insert(nb, current);
+                    queue.push(nb);
+                }
+            }
+        }
+        let mut current = Some(root_idx);
+        while let Some(node) = current {
+            path.push_front(node);
+            current = parent.get(&node).copied();
+        }
+    }
+
+    // pop root
+    path.pop_back();
+    let last = *path.back().unwrap();
+    debug!("{}", graph.node_weight(last).unwrap());
+
+    let root_binop = num_to_binop.get(&root_idx).unwrap();
+    let mut target_value: i64 = if root_binop.lhs == last {
+        *monkey_values.get(&root_binop.rhs).unwrap()
+    } else {
+        *monkey_values.get(&root_binop.lhs).unwrap()
+    };
+
+    while let Some(node) = path.pop_back() {
+        debug!("target_value: {target_value}");
+        if let Some(binop) = num_to_binop.get(&node) {
+            // binop must yield target value
+            // only one of the two values of binop is comes from humn
+            let lhs_human = seen.contains(&binop.lhs);
+            let rhs_human = seen.contains(&binop.rhs);
+            debug_assert!(!(lhs_human && rhs_human));
+            let new_target_value = match binop.operation {
+                Operation::Add => {
+                    if lhs_human {
+                        target_value - *monkey_values.get(&binop.rhs).unwrap()
+                    } else {
+                        target_value - *monkey_values.get(&binop.lhs).unwrap()
+                    }
+                }
+                Operation::Sub => {
+                    if lhs_human {
+                        target_value + *monkey_values.get(&binop.rhs).unwrap()
+                    } else {
+                        *monkey_values.get(&binop.lhs).unwrap() - target_value
+                    }
+                }
+                Operation::Mul => {
+                    if lhs_human {
+                        target_value / *monkey_values.get(&binop.rhs).unwrap()
+                    } else {
+                        target_value / *monkey_values.get(&binop.lhs).unwrap()
+                    }
+                }
+                Operation::Div => {
+                    if lhs_human {
+                        target_value * *monkey_values.get(&binop.rhs).unwrap()
+                    } else {
+                        *monkey_values.get(&binop.lhs).unwrap() / target_value
+                    }
+                }
+            };
+            target_value = new_target_value;
+        }
+    }
+
+    let part2 = target_value;
 
     (part1.unwrap().to_string(), part2.to_string())
 }
@@ -171,14 +262,14 @@ hmdt: 32
 ";
 
         let answer = solve(input);
-        assert_eq!("152", answer.0);
-        // assert_eq!("42", answer.1);
+        assert_eq!("152", answer.0, "part 1");
+        assert_eq!("301", answer.1, "part 2");
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("286698846151845", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("3759566892641", answer.1);
     }
 }
