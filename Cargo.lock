@@ -51,7 +51,7 @@ dependencies = [
 [[package]]
 name = "aoc-lib"
 version = "0.1.0"
-source = "git+https://github.com/michaeladler/aoc-lib.git#724350770e3efc90804faafdcf966157833a3a7c"
+source = "git+https://github.com/michaeladler/aoc-lib.git#c07f2ce2b7464040f4dc2b6535a1ef2cf91d594d"
 
 [[package]]
 name = "arrayvec"
