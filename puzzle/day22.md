@@ -85,8 +85,6 @@ Follow the path given in the monkeys' notes. *What is the final password?*
 
 Your puzzle answer was `186128`.
 
-The first half of this puzzle is complete! It provides one gold star: \*
-
 \--- Part Two ---
 ----------
 
@@ -172,6 +170,10 @@ The final password is still calculated from your final position and facing from 
 
 Fold the map into a cube, *then* follow the path given in the monkeys' notes. *What is the final password?*
 
-Answer:
+Your puzzle answer was `34426`.
 
-Although it hasn't changed, you can still [get your puzzle input](22/input).
+Both parts of this puzzle are complete! They provide two gold stars: \*\*
+
+At this point, you should [return to your Advent calendar](/2022) and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input](22/input).

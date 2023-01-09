@@ -7,6 +7,7 @@ So far:
 1. Day 16
 2. Day 19
 3. Day 17
+4. Day 22
 
 ## Notes
 
@@ -34,6 +35,10 @@ Similar to day 16, also hard. Part 2 was rather unusual for AoC but actually qui
 ### Day 21
 
 Funniest plot twist ever! Nice puzzle.
+
+### Day 22
+
+Ended up hard-coding the wrapping logic... very ugly but it works.
 
 ## Resources
 

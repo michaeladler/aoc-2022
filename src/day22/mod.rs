@@ -71,8 +71,10 @@ enum Instruction {
 const COLS: usize = 256;
 const ROWS: usize = 256;
 
+type Grid = [[u8; COLS]; ROWS];
+
 pub fn solve(input: &[u8]) -> (String, String) {
-    let mut grid: [[u8; COLS]; ROWS] = [[EMPTY; COLS]; ROWS];
+    let mut grid: Grid = [[EMPTY; COLS]; ROWS];
     let mut instructions: Vec<Instruction> = Vec::with_capacity(512);
     {
         let mut y: usize = 0;
@@ -117,6 +119,13 @@ pub fn solve(input: &[u8]) -> (String, String) {
     }
     debug!("instructions: {:?}", instructions);
 
+    let part1 = solve_helper(&grid, &instructions, false);
+    let part2 = solve_helper(&grid, &instructions, true);
+
+    (part1.to_string(), part2.to_string())
+}
+
+fn solve_helper(grid: &Grid, instructions: &[Instruction], cube: bool) -> i64 {
     let mut pos = Position {
         location: Point2D {
             y: 0,
@@ -129,86 +138,19 @@ pub fn solve(input: &[u8]) -> (String, String) {
         },
         orientation: Orientation::East,
     };
-    for inst in &instructions {
+    for inst in instructions {
         debug!("pos: {:?}", pos);
         debug!("applying: {:?}", inst);
         match inst {
             Instruction::Move(steps) => {
-                let delta = match pos.orientation {
-                    Orientation::East => Point2D::new(1, 0),
-                    Orientation::South => Point2D::new(0, 1),
-                    Orientation::West => Point2D::new(-1, 0),
-                    Orientation::North => Point2D::new(0, -1),
-                };
-                debug!("delta: {:?}", delta);
                 let mut i: usize = 0;
                 while i < *steps {
-                    let mut new_loc = pos.location + delta;
-                    new_loc.y = new_loc.y.rem_euclid(ROWS as i64);
-                    new_loc.x = new_loc.x.rem_euclid(COLS as i64);
-                    let val = grid[new_loc.y as usize][new_loc.x as usize];
-                    match val {
-                        OPEN => {
-                            debug!("move ok");
-                            pos.location = new_loc;
+                    let new_pos = if !cube { move_2d(pos) } else { move_3d(pos) };
+                    match float_through_space(grid, new_pos) {
+                        Some(new_pos) => {
+                            pos = new_pos;
                         }
-                        WALL => {
-                            debug!("hit wall");
-                            break;
-                        }
-                        EMPTY => {
-                            let new_loc: Point2D = match pos.orientation {
-                                Orientation::East => {
-                                    let x = grid[pos.location.y as usize]
-                                        .iter()
-                                        .enumerate()
-                                        .find(|(_i, &b)| b != EMPTY)
-                                        .unwrap()
-                                        .0;
-                                    Point2D::new(x as i64, pos.location.y)
-                                }
-                                Orientation::West => {
-                                    let x = grid[pos.location.y as usize]
-                                        .iter()
-                                        .enumerate()
-                                        .rev()
-                                        .find(|(_i, &b)| b != EMPTY)
-                                        .unwrap()
-                                        .0;
-                                    Point2D::new(x as i64, pos.location.y)
-                                }
-                                Orientation::South => {
-                                    let y = grid
-                                        .iter()
-                                        .enumerate()
-                                        .find(|(_i, row)| row[pos.location.x as usize] != EMPTY)
-                                        .unwrap()
-                                        .0;
-                                    Point2D::new(pos.location.x, y as i64)
-                                }
-                                Orientation::North => {
-                                    let y = grid
-                                        .iter()
-                                        .enumerate()
-                                        .rev()
-                                        .find(|(_i, row)| row[pos.location.x as usize] != EMPTY)
-                                        .unwrap()
-                                        .0;
-                                    Point2D::new(pos.location.x, y as i64)
-                                }
-                            };
-                            let val = grid[new_loc.y as usize][new_loc.x as usize];
-                            if val != WALL {
-                                debug!("wrap around");
-                                pos.location = new_loc;
-                            } else {
-                                debug!("cannot wrap around due to WALL on the other side");
-                                break;
-                            }
-                        }
-                        _ => {
-                            panic!("impossible");
-                        }
+                        None => break,
                     }
                     i += 1;
                 }
@@ -221,10 +163,210 @@ pub fn solve(input: &[u8]) -> (String, String) {
     }
 
     debug!("final: {:?}", pos);
-    let part1 = pos.score();
-    let part2: i64 = 42;
+    pos.score()
+}
 
-    (part1.to_string(), part2.to_string())
+fn move_2d(pos: Position) -> Position {
+    let delta = match pos.orientation {
+        Orientation::East => Point2D::new(1, 0),
+        Orientation::South => Point2D::new(0, 1),
+        Orientation::West => Point2D::new(-1, 0),
+        Orientation::North => Point2D::new(0, -1),
+    };
+    debug!("delta: {:?}", delta);
+
+    let mut new_loc = pos.location + delta;
+    new_loc.y = new_loc.y.rem_euclid(ROWS as i64);
+    new_loc.x = new_loc.x.rem_euclid(COLS as i64);
+    Position {
+        location: new_loc,
+        orientation: pos.orientation,
+    }
+}
+
+fn float_through_space(grid: &Grid, pos: Position) -> Option<Position> {
+    let val = grid[pos.location.y as usize][pos.location.x as usize];
+    match val {
+        OPEN => {
+            debug!("move ok");
+            Some(pos)
+        }
+        WALL => {
+            debug!("hit wall");
+            None
+        }
+        EMPTY => {
+            let new_loc: Point2D = match pos.orientation {
+                Orientation::East => {
+                    let x = grid[pos.location.y as usize]
+                        .iter()
+                        .enumerate()
+                        .find(|(_i, &b)| b != EMPTY)
+                        .unwrap()
+                        .0;
+                    Point2D::new(x as i64, pos.location.y)
+                }
+                Orientation::West => {
+                    let x = grid[pos.location.y as usize]
+                        .iter()
+                        .enumerate()
+                        .rev()
+                        .find(|(_i, &b)| b != EMPTY)
+                        .unwrap()
+                        .0;
+                    Point2D::new(x as i64, pos.location.y)
+                }
+                Orientation::South => {
+                    let y = grid
+                        .iter()
+                        .enumerate()
+                        .find(|(_i, row)| row[pos.location.x as usize] != EMPTY)
+                        .unwrap()
+                        .0;
+                    Point2D::new(pos.location.x, y as i64)
+                }
+                Orientation::North => {
+                    let y = grid
+                        .iter()
+                        .enumerate()
+                        .rev()
+                        .find(|(_i, row)| row[pos.location.x as usize] != EMPTY)
+                        .unwrap()
+                        .0;
+                    Point2D::new(pos.location.x, y as i64)
+                }
+            };
+            let val = grid[new_loc.y as usize][new_loc.x as usize];
+            if val != WALL {
+                debug!("wrap around");
+                Some(Position {
+                    location: new_loc,
+                    orientation: pos.orientation,
+                })
+            } else {
+                debug!("cannot wrap around due to WALL on the other side");
+                None
+            }
+        }
+        _ => {
+            panic!("impossible");
+        }
+    }
+}
+
+fn move_3d(pos: Position) -> Position {
+    let x = pos.location.x;
+    let y = pos.location.y;
+    match pos.orientation {
+        Orientation::East => {
+            if x == 149 && (0..50).contains(&y) {
+                return Position {
+                    location: Point2D::new(99, 149 - y),
+                    orientation: Orientation::West,
+                };
+            }
+            if x == 99 && (50..100).contains(&y) {
+                return Position {
+                    location: Point2D::new(100 + (y - 50), 49),
+                    orientation: Orientation::North,
+                };
+            }
+            if x == 99 && y > 100 && y < 150 {
+                return Position {
+                    location: Point2D::new(149, 49 - (y - 100)),
+                    orientation: Orientation::West,
+                };
+            }
+            if x == 49 && (150..200).contains(&y) {
+                return Position {
+                    location: Point2D::new(50 + (y - 150), 149),
+                    orientation: Orientation::North,
+                };
+            }
+            Position {
+                location: Point2D::new(pos.location.x + 1, pos.location.y),
+                orientation: pos.orientation,
+            }
+        }
+        Orientation::West => {
+            if x == 50 && (0..50).contains(&y) {
+                return Position {
+                    location: Point2D::new(0, 149 - y),
+                    orientation: Orientation::East,
+                };
+            }
+            if x == 50 && (50..100).contains(&y) {
+                return Position {
+                    location: Point2D::new(y - 50, 100),
+                    orientation: Orientation::South,
+                };
+            }
+            if x == 0 && (100..150).contains(&y) {
+                return Position {
+                    location: Point2D::new(50, 49 - (y - 100)),
+                    orientation: Orientation::East,
+                };
+            }
+            if x == 0 && (150..200).contains(&y) {
+                return Position {
+                    location: Point2D::new(50 + (y - 150), 0),
+                    orientation: Orientation::South,
+                };
+            }
+            Position {
+                location: Point2D::new(pos.location.x - 1, pos.location.y),
+                orientation: pos.orientation,
+            }
+        }
+        Orientation::South => {
+            if (0..50).contains(&x) && y == 199 {
+                return Position {
+                    location: Point2D::new(x + 100, 0),
+                    orientation: Orientation::South,
+                };
+            }
+            if (50..100).contains(&x) && y == 149 {
+                return Position {
+                    location: Point2D::new(49, 150 + (x - 50)),
+                    orientation: Orientation::West,
+                };
+            }
+            if (100..150).contains(&x) && y == 49 {
+                return Position {
+                    location: Point2D::new(99, 50 + (x - 100)),
+                    orientation: Orientation::West,
+                };
+            }
+            Position {
+                location: Point2D::new(pos.location.x, pos.location.y + 1),
+                orientation: pos.orientation,
+            }
+        }
+        Orientation::North => {
+            if (0..50).contains(&x) && y == 100 {
+                return Position {
+                    location: Point2D::new(50, 50 + x),
+                    orientation: Orientation::East,
+                };
+            }
+            if (50..100).contains(&x) && y == 0 {
+                return Position {
+                    location: Point2D::new(0, 150 + (x - 50)),
+                    orientation: Orientation::East,
+                };
+            }
+            if (100..150).contains(&x) && y == 0 {
+                return Position {
+                    location: Point2D::new(x - 100, 199),
+                    orientation: Orientation::North,
+                };
+            }
+            Position {
+                location: Point2D::new(pos.location.x, pos.location.y - 1),
+                orientation: pos.orientation,
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -233,14 +375,8 @@ mod tests {
 
     const DAY: i32 = 22;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example() {
-        init();
-
         let input = b"        ...#
         .#..
         #...
@@ -260,13 +396,13 @@ mod tests {
 
         let answer = solve(input);
         assert_eq!("6032", answer.0);
-        // assert_eq!("42", answer.1);
+        // doesn't work for example due to hard-coding the wrapping logic
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("186128", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("34426", answer.1);
     }
 }
