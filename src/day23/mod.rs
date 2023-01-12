@@ -25,38 +25,21 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
-    fn example() {
+    fn example_large() {
         init();
 
-        let input = b"TODO
+        let input = b"....#..
+..###.#
+#...#.#
+.#...##
+#.###..
+##.#.##
+.#..#..
 ";
 
         let answer = solve(input);
-        assert_eq!("42", answer.0);
+        assert_eq!("110", answer.0);
         // assert_eq!("42", answer.1);
-    }
-
-    #[test]
-    #[ignore]
-    fn part1_example() {
-        init();
-
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).0);
-        }
-    }
-
-    #[test]
-    #[ignore]
-    fn part2_example() {
-        let bufs = vec![(b"", 0)];
-
-        for (s, answer) in bufs {
-            assert_eq!(answer.to_string(), solve(s).1);
-        }
     }
 
     #[test]
