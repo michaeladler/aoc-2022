@@ -40,6 +40,6 @@ Funniest plot twist ever! Nice puzzle.
 
 Ended up hard-coding the wrapping logic... very ugly but it works.
 
-## Resources
+### Day 23
 
-- https://github.com/TheAlgorithms/Rust
+Much easier than previous days. We're coming to the end.

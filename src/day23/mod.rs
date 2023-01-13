@@ -101,7 +101,7 @@ impl Direction {
 }
 
 pub fn solve(input: &[u8]) -> (String, String) {
-    let mut grid = Grid::with_capacity(32);
+    let mut grid = Grid::with_capacity(100);
     {
         // origin is top-left of our input
         let mut y: i64 = 0;
@@ -123,14 +123,15 @@ pub fn solve(input: &[u8]) -> (String, String) {
     debug!("initial: {}", grid);
     let mut grid2 = Grid::with_capacity(grid.points.len());
     let mut idx: u32 = 0;
-    let rounds = 10;
+    let rounds = i32::MAX;
     let mut start_orientation = Direction::North;
 
     let mut propositions: AHashMap<Point2D, Vec<Point2D>> =
         AHashMap::with_capacity(grid.points.len());
 
     let mut part1: usize = 0;
-    for i in 1..=rounds {
+    let mut part2: i32 = 0;
+    'outer: for i in 1..=rounds {
         propositions.clear();
         debug!("== start round {} ==", i);
         let (old, new) = if idx == 0 {
@@ -205,6 +206,11 @@ pub fn solve(input: &[u8]) -> (String, String) {
 
         // second half: each Elf moves to their proposed destination tile if they were the *only*
         // Elf to propose moving to that position
+        if propositions.is_empty() {
+            part2 = i;
+            break 'outer;
+        }
+
         for (dest, elves) in propositions.iter() {
             debug!("{:?} wants to be visited by: {:?}", dest, elves);
             match elves.len() {
@@ -241,7 +247,6 @@ pub fn solve(input: &[u8]) -> (String, String) {
         idx = 1 - idx;
     }
 
-    let part2: i64 = 42;
     (part1.to_string(), part2.to_string())
 }
 
@@ -251,14 +256,8 @@ mod tests {
 
     const DAY: i32 = 23;
 
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     #[test]
     fn example_large() {
-        init();
-
         let input = b"....#..
 ..###.#
 #...#.#
@@ -270,13 +269,13 @@ mod tests {
 
         let answer = solve(input);
         assert_eq!("110", answer.0);
-        // assert_eq!("42", answer.1);
+        assert_eq!("20", answer.1);
     }
 
     #[test]
     fn part1_and_part2() {
         let answer = solve(&aoc_lib::io::read_input(DAY).unwrap());
         assert_eq!("4070", answer.0);
-        //assert_eq!("42", answer.1);
+        assert_eq!("881", answer.1);
     }
 }

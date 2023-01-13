@@ -227,8 +227,6 @@ Simulate the Elves' process and find the smallest rectangle that contains the El
 
 Your puzzle answer was `4070`.
 
-The first half of this puzzle is complete! It provides one gold star: \*
-
 \--- Part Two ---
 ----------
 
@@ -254,6 +252,10 @@ In the example above, the *first round where no Elf moved* was round `*20*`:
 
 Figure out where the Elves need to go. *What is the number of the first round where no Elf moves?*
 
-Answer:
+Your puzzle answer was `881`.
 
-Although it hasn't changed, you can still [get your puzzle input](23/input).
+Both parts of this puzzle are complete! They provide two gold stars: \*\*
+
+At this point, you should [return to your Advent calendar](/2022) and try another puzzle.
+
+If you still want to see it, you can [get your puzzle input](23/input).
