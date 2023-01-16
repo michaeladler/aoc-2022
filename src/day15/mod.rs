@@ -50,7 +50,7 @@ fn count_illegal_beacon_locs(
             beacons_in_row.insert(*beacon);
         }
         let dy = (sensor.0.y - y_dest).abs();
-        let dist = sensor.0.manhattan(&beacon.0);
+        let dist = sensor.0.manhattan(beacon.0);
         let dx = dist - dy;
         if dx < 0 {
             continue;
