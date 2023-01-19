@@ -43,3 +43,8 @@ Ended up hard-coding the wrapping logic... very ugly but it works.
 ### Day 23
 
 Much easier than previous days. We're coming to the end.
+
+### Day 24
+
+Great puzzle! Took me a while to realize that you cannot stay at the current position if a blizzard wants to take your
+position in the next round.

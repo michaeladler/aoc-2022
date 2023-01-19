@@ -22,10 +22,12 @@ pub mod day20;
 pub mod day21;
 pub mod day22;
 pub mod day23;
+pub mod day24;
 
 pub fn solve(day: i32) -> Option<(String, String)> {
     match (day, aoc_lib::io::read_input(day)) {
         // marker2
+        (24, Ok(input)) => Some(day24::solve(&input)).map(|x| (x.0.to_string(), x.1.to_string())),
         (23, Ok(input)) => Some(day23::solve(&input)),
         (22, Ok(input)) => Some(day22::solve(&input)),
         (21, Ok(input)) => Some(day21::solve(&input)),
