@@ -43,6 +43,7 @@ dependencies = [
  "criterion",
  "env_logger",
  "log",
+ "num-integer",
  "petgraph",
  "rayon",
  "serde_json",
