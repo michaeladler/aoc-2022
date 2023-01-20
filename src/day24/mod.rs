@@ -58,26 +58,25 @@ pub fn solve(input: &[u8]) -> (u32, u32) {
         blizz = blizz.move_blizzards(end);
     }
 
-    let part1 = a_star(start, end, &blizz_configs);
+    let initial = Node::new(start);
+    let (node, part1) = a_star(initial, end, &blizz_configs);
     let part2 = 42;
     (part1, part2)
 }
 
 // Based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-fn a_star(start: Point2D<i32>, end: Point2D<i32>, blizz_configs: &[Blizzard]) -> u32 {
+fn a_star(start: Node, dest: Point2D<i32>, blizz_configs: &[Blizzard]) -> (Node, u32) {
     const INFINITY: u32 = u32::MAX - 10;
 
-    let h = |current: Point2D<i32>| end.manhattan(current) as u32;
-
-    let initial = Node::new(start);
+    let h = |current: Point2D<i32>| dest.manhattan(current) as u32;
 
     // For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
     let mut g_score: AHashMap<Node, u32> = AHashMap::with_capacity(1024);
-    g_score.insert(initial, 0);
+    g_score.insert(start, 0);
 
     // The set of discovered nodes that may need to be (re-)expanded.
     let mut open: BinaryHeap<(u32, Node), MinComparator> = BinaryHeap::with_capacity_min(1024);
-    open.push((0, initial));
+    open.push((0, start));
 
     // For node n, cameFrom[n] is the node immediately preceding it on the
     // cheapest path from start to n currently known.
@@ -85,8 +84,8 @@ fn a_star(start: Point2D<i32>, end: Point2D<i32>, blizz_configs: &[Blizzard]) ->
 
     let mut neighbors = Vec::with_capacity(5);
     while let Some((_, current)) = open.pop() {
-        if current.position == end {
-            return *g_score.get(&current).unwrap();
+        if current.position == dest {
+            return (current, *g_score.get(&current).unwrap());
         }
 
         let g_current = g_score.get(&current).copied().unwrap_or(INFINITY);
@@ -96,7 +95,7 @@ fn a_star(start: Point2D<i32>, end: Point2D<i32>, blizz_configs: &[Blizzard]) ->
         trace!("tentative_g_score: {tentative_g_score}");
 
         neighbors.clear();
-        current.neighbors(start, end, &mut neighbors);
+        current.neighbors(start.position, dest, &mut neighbors);
         // not moving is an option and leads to a new node in the graph;
         // however, if a blizzard wants to take this position, we must move!
         neighbors.push(current.position);
@@ -123,7 +122,7 @@ fn a_star(start: Point2D<i32>, end: Point2D<i32>, blizz_configs: &[Blizzard]) ->
         }
     }
 
-    0
+    panic!("no path found");
 }
 
 #[cfg(test)]
