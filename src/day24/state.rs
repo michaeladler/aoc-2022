@@ -14,7 +14,7 @@ impl Node {
         }
     }
 
-    pub fn neighbors(&self, start: Point2D<i32>, end: Point2D<i32>, out: &mut Vec<Point2D<i32>>) {
+    pub fn neighbors(&self, end: Point2D<i32>, out: &mut Vec<Point2D<i32>>) {
         let deltas = [
             Point2D::new(0, -1),
             Point2D::new(0, 1),
@@ -23,7 +23,7 @@ impl Node {
         ];
         for d in deltas {
             let candidate = self.position + d;
-            if (candidate == start || candidate == end)
+            if (candidate == Point2D::new(1, 0) || candidate == end)
                 || (candidate.x > 0
                     && candidate.x <= end.x
                     && candidate.y > 0
