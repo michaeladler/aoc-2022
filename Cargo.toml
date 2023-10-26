@@ -28,7 +28,7 @@ num-integer = "0.1.45"
 git = "https://github.com/michaeladler/aoc-lib.git"
 
 [dev-dependencies]
-criterion = "0.4"
+criterion = "0.5"
 
 [build-dependencies]
 cc = "1.0"
