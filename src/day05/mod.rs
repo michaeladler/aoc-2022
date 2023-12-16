@@ -14,7 +14,7 @@ pub fn solve(input: &[u8]) -> (String, String) {
                 input = &input[i..];
                 break;
             }
-            if (b'A'..=b'Z').contains(&b) {
+            if b.is_ascii_uppercase() {
                 let entry = stacks_tmp.entry(i);
                 entry
                     .or_insert_with(|| VecDeque::with_capacity(10))
