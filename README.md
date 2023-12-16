@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/stars%20⭐-32-yellow)
+
 # aoc-2022
 
 ## Hardest Problems
